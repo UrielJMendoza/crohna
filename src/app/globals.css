@@ -29,40 +29,6 @@ body {
   color: var(--chrono-text);
   font-family: "Jost", var(--font-body), system-ui, sans-serif;
   overflow-x: hidden;
-  cursor: none;
-}
-
-/* Custom gold cursor */
-@media (pointer: fine) {
-  body::after {
-    content: "";
-    position: fixed;
-    width: 8px;
-    height: 8px;
-    background: #C9A96E;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    transition: transform 0.1s ease;
-    left: var(--cursor-x, -100px);
-    top: var(--cursor-y, -100px);
-  }
-
-  body::before {
-    content: "";
-    position: fixed;
-    width: 32px;
-    height: 32px;
-    border: 1px solid rgba(201,169,110,0.4);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9998;
-    transform: translate(-50%, -50%);
-    transition: left 0.15s ease, top 0.15s ease, transform 0.15s ease;
-    left: var(--cursor-x, -100px);
-    top: var(--cursor-y, -100px);
-  }
 }
 
 /* Grain texture overlay */
@@ -229,20 +195,3 @@ html.lenis {
   color: #F0EBE1;
 }
 
-/* Restore cursor on touch devices */
-@media (pointer: coarse) {
-  body {
-    cursor: auto;
-  }
-}
-
-/* Links and buttons restore pointer on hover */
-a, button, [role="button"], input, select, textarea {
-  cursor: none;
-}
-
-@media (pointer: coarse) {
-  a, button, [role="button"], input, select, textarea {
-    cursor: auto;
-  }
-}

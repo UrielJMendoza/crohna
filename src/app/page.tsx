@@ -707,14 +707,6 @@ export default function Home() {
     if (!completed) {
       setShowOnboarding(true);
     }
-
-    // Custom cursor tracking
-    const handleMouseMove = (e: MouseEvent) => {
-      document.body.style.setProperty("--cursor-x", `${e.clientX}px`);
-      document.body.style.setProperty("--cursor-y", `${e.clientY}px`);
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   const handleOnboardingComplete = (choice: "demo" | "manual" | "import") => {

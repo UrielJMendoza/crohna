@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Navigation from "@/components/ui/Navigation";
 import Footer from "@/components/ui/Footer";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -19,8 +20,8 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Chrono — Your Life, Beautifully Mapped",
   description:
-    "Chrono transforms your memories into a stunning visual timeline. AI-powered digital life story.",
-  keywords: ["timeline", "life events", "AI", "memories", "digital story"],
+    "Chrono transforms your memories into a stunning visual timeline. A premium digital life story.",
+  keywords: ["timeline", "life events", "memories", "digital story"],
 };
 
 export default function RootLayout({
@@ -31,9 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-body antialiased bg-chrono-bg text-chrono-text">
-        <Navigation />
-        <main>{children}</main>
-        <Footer />
+        <ErrorBoundary>
+          <Navigation />
+          <main>{children}</main>
+          <Footer />
+        </ErrorBoundary>
       </body>
     </html>
   );

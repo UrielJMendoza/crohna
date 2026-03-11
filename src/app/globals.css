@@ -3,12 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --chrono-bg: #080808;
-  --chrono-surface: #0F0F0F;
-  --chrono-card: #141414;
-  --chrono-accent: rgba(255,255,255,0.8);
+  --chrono-bg: 8 8 8;
+  --chrono-surface: 15 15 15;
+  --chrono-card: 20 20 20;
+  --chrono-border: 26 26 26;
+  --chrono-accent: 255 255 255;
   --chrono-glow: rgba(255,255,255,0.3);
-  --chrono-text: #F0EBE1;
+  --chrono-text: 240 235 225;
+  --chrono-text-secondary: rgba(240,235,225,0.65);
   --chrono-muted: rgba(240,235,225,0.45);
 
   --background: #080808;
@@ -16,6 +18,24 @@
   --primary: rgba(255,255,255,0.8);
   --border: rgba(255,255,255,0.12);
   --muted: rgba(255,255,255,0.06);
+}
+
+html.light {
+  --chrono-bg: 245 240 232;
+  --chrono-surface: 237 232 222;
+  --chrono-card: 228 221 208;
+  --chrono-border: 212 207 197;
+  --chrono-accent: 26 24 20;
+  --chrono-glow: rgba(26,24,20,0.1);
+  --chrono-text: 26 24 20;
+  --chrono-text-secondary: rgba(26,24,20,0.6);
+  --chrono-muted: rgba(26,24,20,0.5);
+
+  --background: #F5F0E8;
+  --foreground: #1A1814;
+  --primary: rgba(26,24,20,0.8);
+  --border: rgba(26,24,20,0.12);
+  --muted: rgba(26,24,20,0.06);
 }
 
 * {
@@ -27,14 +47,15 @@
 html {
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: #1A1A1A transparent;
+  scrollbar-color: var(--chrono-border) transparent;
 }
 
 body {
-  background: var(--chrono-bg);
-  color: var(--chrono-text);
+  background: rgb(var(--chrono-bg));
+  color: rgb(var(--chrono-text));
   font-family: var(--font-body), system-ui, sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Grain texture overlay */
@@ -56,12 +77,12 @@ body::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1A1A1A;
+  background: var(--chrono-border);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.15);
+  background: var(--chrono-muted);
 }
 
 /* Custom utility classes */
@@ -71,17 +92,19 @@ body::after {
   }
 
   .glass {
-    background: rgba(8, 8, 8, 0.7);
+    background: var(--chrono-bg);
+    opacity: 0.85;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.12);
+    border: 1px solid var(--border);
   }
 
   .glass-strong {
-    background: rgba(8, 8, 8, 0.94);
+    background: var(--chrono-bg);
+    opacity: 0.96;
     backdrop-filter: blur(40px);
     -webkit-backdrop-filter: blur(40px);
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid var(--border);
   }
 
   .glow-accent {
@@ -94,18 +117,18 @@ body::after {
   }
 
   .gradient-text {
-    color: #F0EBE1;
+    color: rgb(var(--chrono-text));
   }
 
   .gradient-text-subtle {
-    color: rgba(240,235,225,0.65);
+    color: var(--chrono-text-secondary);
   }
 
   .section-label {
     font-size: 10px;
     letter-spacing: 0.5em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.8);
+    color: rgb(var(--chrono-accent) / 0.8);
     font-family: var(--font-body), system-ui, sans-serif;
     font-weight: 200;
   }
@@ -165,7 +188,8 @@ body::after {
     font-family: var(--font-display), Georgia, serif;
     font-weight: 700;
     font-size: clamp(120px, 15vw, 240px);
-    color: rgba(255,255,255,0.03);
+    color: var(--chrono-glow);
+    opacity: 0.1;
     pointer-events: none;
     user-select: none;
     line-height: 1;
@@ -181,10 +205,26 @@ html.lenis {
   scroll-behavior: auto;
 }
 
-/* Selection color — white */
+/* Selection color */
 ::selection {
-  background: rgba(255,255,255,0.15);
-  color: #F0EBE1;
+  background: rgb(var(--chrono-accent) / 0.15);
+  color: rgb(var(--chrono-text));
+}
+
+/* Light mode grain adjustments */
+html.light body::after {
+  opacity: 0.02;
+}
+
+/* Light mode card hover */
+html.light .card-hover:hover {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08),
+              0 0 40px rgba(0,0,0,0.02);
+}
+
+/* Light mode archival img */
+html.light .archival-img {
+  filter: brightness(0.95) saturate(0.7);
 }
 
 /* CSS variables for shadcn/tubelight compatibility */
@@ -194,6 +234,14 @@ html.lenis {
     --foreground: 40 28% 91%;
     --primary: 0 0% 100%;
     --muted: 0 0% 8%;
-    --border: 0 0% 100%;
+    --border: 0 0% 12%;
+  }
+
+  html.light {
+    --background: 36 30% 93%;
+    --foreground: 36 12% 9%;
+    --primary: 36 12% 9%;
+    --muted: 36 15% 88%;
+    --border: 36 10% 70%;
   }
 }

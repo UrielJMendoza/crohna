@@ -37,7 +37,7 @@ export default function Footer() {
                   key={label}
                   href={href}
                   className="text-sm font-body font-extralight hover:text-white cursor-pointer transition-colors duration-300"
-                  style={{ color: "rgba(240,235,225,0.65)" }}
+                  style={{ color: "var(--chrono-text-secondary)" }}
                 >
                   {label}
                 </Link>
@@ -55,7 +55,7 @@ export default function Footer() {
                   key={item}
                   onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                   className="text-sm font-body font-extralight hover:text-white cursor-pointer transition-colors duration-300 text-left"
-                  style={{ color: "rgba(240,235,225,0.65)" }}
+                  style={{ color: "var(--chrono-text-secondary)" }}
                 >
                   {item}
                 </button>

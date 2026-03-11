@@ -29,30 +29,72 @@ const HERO_WORDS = ["beautifully", "elegantly", "perfectly", "intimately", "vivi
 
 function AnimatedWord() {
   const [index, setIndex] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const measureRef = useRef<HTMLDivElement>(null);
+
+  // Measure all words once on mount and set fixed width to the widest
+  useEffect(() => {
+    if (!measureRef.current) return;
+    const spans = measureRef.current.querySelectorAll("span");
+    let max = 0;
+    spans.forEach((span) => {
+      const w = span.getBoundingClientRect().width;
+      if (w > max) max = w;
+    });
+    setContainerWidth(Math.ceil(max) + 2);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % HERO_WORDS.length);
-    }, 2500);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <span className="inline-block relative overflow-hidden align-bottom" style={{ height: "1.15em", width: "auto" }}>
-      <AnimatePresence mode="wait">
-        <motion.span
-          key={HERO_WORDS[index]}
-          initial={{ y: "100%", opacity: 0 }}
-          animate={{ y: "0%", opacity: 1 }}
-          exit={{ y: "-100%", opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="inline-block italic"
-          style={{ fontSize: "1.35em", lineHeight: "0.85" }}
-        >
-          {HERO_WORDS[index]}
-        </motion.span>
-      </AnimatePresence>
-    </span>
+    <>
+      {/* Hidden measurement container */}
+      <div
+        ref={measureRef}
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          visibility: "hidden",
+          pointerEvents: "none",
+          whiteSpace: "nowrap",
+          fontSize: "1.35em",
+          fontStyle: "italic",
+          lineHeight: "0.85",
+        }}
+      >
+        {HERO_WORDS.map((word) => (
+          <span key={word} style={{ display: "block" }}>{word}</span>
+        ))}
+      </div>
+
+      <span
+        className="inline-block relative overflow-hidden align-bottom"
+        style={{
+          height: "1.15em",
+          minWidth: containerWidth > 0 ? `${containerWidth}px` : "280px",
+          width: containerWidth > 0 ? `${containerWidth}px` : "280px",
+        }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={HERO_WORDS[index]}
+            initial={{ y: "100%", opacity: 0 }}
+            animate={{ y: "0%", opacity: 1 }}
+            exit={{ y: "-100%", opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute left-0 right-0 inline-block italic text-center"
+            style={{ fontSize: "1.35em", lineHeight: "0.85" }}
+          >
+            {HERO_WORDS[index]}
+          </motion.span>
+        </AnimatePresence>
+      </span>
+    </>
   );
 }
 
@@ -67,7 +109,7 @@ function HeroSection() {
   const scale = useTransform(scrollYProgress, [0, 0.8], [1, 0.97]);
 
   return (
-    <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden" style={{ backgroundColor: "#080808" }}>
+    <section ref={ref} className="relative min-h-screen flex items-center justify-center overflow-hidden bg-chrono-bg">
       <ParticleField />
 
       <motion.div
@@ -101,7 +143,7 @@ function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 1.2 }}
           className="text-base md:text-lg font-body font-extralight max-w-lg mx-auto mb-16 leading-relaxed"
-          style={{ color: "rgba(240,235,225,0.65)" }}
+          style={{ color: "var(--chrono-text-secondary)" }}
         >
           A visual timeline of your memories, milestones, and places.
         </motion.p>
@@ -187,7 +229,7 @@ function HowItWorksSection() {
               <h3 className="text-lg font-display font-bold text-chrono-text mb-3">
                 {step.title}
               </h3>
-              <p className="text-sm font-body font-extralight leading-relaxed max-w-xs mx-auto" style={{ color: "rgba(240,235,225,0.65)" }}>
+              <p className="text-sm font-body font-extralight leading-relaxed max-w-xs mx-auto" style={{ color: "var(--chrono-text-secondary)" }}>
                 {step.description}
               </p>
             </FadeUp>
@@ -285,7 +327,7 @@ function PlayYourStorySection() {
             <br />
             <em>story</em>
           </h2>
-          <p className="font-body font-extralight max-w-md mx-auto text-sm leading-relaxed" style={{ color: "rgba(240,235,225,0.65)" }}>
+          <p className="font-body font-extralight max-w-md mx-auto text-sm leading-relaxed" style={{ color: "var(--chrono-text-secondary)" }}>
             Watch your life unfold year by year in a cinematic sequence
           </p>
         </FadeUp>
@@ -437,7 +479,7 @@ function FeaturesSection() {
                   <h3 className="text-lg font-display font-bold mb-3 text-chrono-text tracking-tight">
                     {feature.title}
                   </h3>
-                  <p className="text-sm font-body font-extralight leading-relaxed" style={{ color: "rgba(240,235,225,0.65)" }}>
+                  <p className="text-sm font-body font-extralight leading-relaxed" style={{ color: "var(--chrono-text-secondary)" }}>
                     {feature.description}
                   </p>
                 </div>
@@ -463,7 +505,7 @@ function TimelinePreview() {
           <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tight mb-5 text-white">
             Your life <em>in motion</em>
           </h2>
-          <p className="font-body font-extralight max-w-md mx-auto text-sm leading-relaxed" style={{ color: "rgba(240,235,225,0.65)" }}>
+          <p className="font-body font-extralight max-w-md mx-auto text-sm leading-relaxed" style={{ color: "var(--chrono-text-secondary)" }}>
             Every event becomes a card on your personal timeline
           </p>
         </FadeUp>
@@ -505,7 +547,7 @@ function MapPreview() {
             <br />
             <em>story happened</em>
           </h2>
-          <p className="font-body font-extralight max-w-md mx-auto text-sm leading-relaxed" style={{ color: "rgba(240,235,225,0.65)" }}>
+          <p className="font-body font-extralight max-w-md mx-auto text-sm leading-relaxed" style={{ color: "var(--chrono-text-secondary)" }}>
             Every memory pinned to the places that matter most
           </p>
         </FadeUp>
@@ -613,7 +655,7 @@ function StoriesPreview() {
             <br />
             <em>your life</em>
           </h2>
-          <p className="font-body font-extralight max-w-md mx-auto text-sm leading-relaxed" style={{ color: "rgba(240,235,225,0.65)" }}>
+          <p className="font-body font-extralight max-w-md mx-auto text-sm leading-relaxed" style={{ color: "var(--chrono-text-secondary)" }}>
             Emotional, personal narratives crafted about your journey
           </p>
         </FadeUp>
@@ -665,7 +707,7 @@ function TestimonialsSection() {
           {testimonials.map((t, i) => (
             <FadeUp key={t.name} delay={i * 0.12}>
               <div className="bg-chrono-bg p-10 h-full flex flex-col">
-                <p className="text-lg font-display font-bold italic leading-relaxed mb-8 flex-1" style={{ color: "rgba(240,235,225,0.65)" }}>
+                <p className="text-lg font-display font-bold italic leading-relaxed mb-8 flex-1" style={{ color: "var(--chrono-text-secondary)" }}>
                   &ldquo;{t.quote}&rdquo;
                 </p>
                 <div className="flex items-center gap-3">
@@ -695,7 +737,7 @@ function CTASection() {
           <br />
           <em>your story?</em>
         </h2>
-        <p className="text-base font-body font-extralight max-w-md mx-auto mb-14 leading-relaxed" style={{ color: "rgba(240,235,225,0.65)" }}>
+        <p className="text-base font-body font-extralight max-w-md mx-auto mb-14 leading-relaxed" style={{ color: "var(--chrono-text-secondary)" }}>
           Transform your memories into a beautiful, interactive timeline.
         </p>
 

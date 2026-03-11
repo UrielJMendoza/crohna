@@ -171,7 +171,7 @@ function WelcomeStep() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
-        className="text-lg max-w-md mx-auto leading-relaxed" style={{ color: "rgba(240,235,225,0.65)" }}
+        className="text-lg max-w-md mx-auto leading-relaxed" style={{ color: "var(--chrono-text-secondary)" }}
       >
         Your life is a story worth telling. Chrono transforms your memories, milestones, and moments into a beautiful, interactive timeline.
       </motion.p>
@@ -236,7 +236,7 @@ function ExplainStep() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          style={{ color: "rgba(240,235,225,0.65)" }}
+          style={{ color: "var(--chrono-text-secondary)" }}
         >
           Three steps to your personal life story
         </motion.p>
@@ -256,7 +256,7 @@ function ExplainStep() {
             </div>
             <div>
               <h3 className="font-display font-bold text-chrono-text mb-1">{s.title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: "rgba(240,235,225,0.65)" }}>{s.description}</p>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--chrono-text-secondary)" }}>{s.description}</p>
             </div>
           </motion.div>
         ))}
@@ -316,7 +316,7 @@ function ChooseStep({ onComplete }: { onComplete: (choice: "demo" | "manual" | "
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          style={{ color: "rgba(240,235,225,0.65)" }}
+          style={{ color: "var(--chrono-text-secondary)" }}
         >
           You can always change this later
         </motion.p>
@@ -344,7 +344,7 @@ function ChooseStep({ onComplete }: { onComplete: (choice: "demo" | "manual" | "
                   </span>
                 )}
               </div>
-              <p className="text-sm leading-relaxed mt-1" style={{ color: "rgba(240,235,225,0.65)" }}>{option.description}</p>
+              <p className="text-sm leading-relaxed mt-1" style={{ color: "var(--chrono-text-secondary)" }}>{option.description}</p>
             </div>
             <svg className="relative w-5 h-5 text-chrono-muted group-hover:text-chrono-text transition-colors flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />

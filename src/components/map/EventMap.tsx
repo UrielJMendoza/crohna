@@ -189,7 +189,7 @@ export default function EventMap({ events }: EventMapProps) {
                 </p>
               )}
               {selectedEvent.description && (
-                <p className="text-sm font-body font-extralight leading-relaxed" style={{ color: "rgba(240,235,225,0.65)" }}>
+                <p className="text-sm font-body font-extralight leading-relaxed" style={{ color: "var(--chrono-text-secondary)" }}>
                   {selectedEvent.description}
                 </p>
               )}
@@ -219,7 +219,7 @@ export default function EventMap({ events }: EventMapProps) {
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-[11px] font-body font-extralight" style={{ color: "rgba(240,235,225,0.65)" }}>
+              <span className="text-[11px] font-body font-extralight" style={{ color: "var(--chrono-text-secondary)" }}>
                 {item.label}
               </span>
             </div>

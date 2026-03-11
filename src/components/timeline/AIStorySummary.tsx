@@ -33,7 +33,7 @@ export default function AIStorySummary({ story, index }: AIStorySummaryProps) {
           {story.title}
         </h3>
 
-        <p className="relative font-body font-extralight leading-relaxed text-base mb-8" style={{ color: "rgba(240,235,225,0.65)" }}>
+        <p className="relative font-body font-extralight leading-relaxed text-base mb-8" style={{ color: "var(--chrono-text-secondary)" }}>
           {story.summary}
         </p>
 
@@ -48,7 +48,7 @@ export default function AIStorySummary({ story, index }: AIStorySummaryProps) {
               className="flex items-start gap-3"
             >
               <div className="w-1 h-1 rounded-full bg-white/40 mt-2 flex-shrink-0" />
-              <span className="text-sm font-body font-extralight" style={{ color: "rgba(240,235,225,0.65)" }}>{highlight}</span>
+              <span className="text-sm font-body font-extralight" style={{ color: "var(--chrono-text-secondary)" }}>{highlight}</span>
             </motion.div>
           ))}
         </div>

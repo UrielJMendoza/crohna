@@ -26,7 +26,7 @@ export default function ChapterHeader({ title, subtitle, dateRange }: ChapterHea
           </span>
           <h3 className="text-lg md:text-xl font-display font-bold text-white">{title}</h3>
           {subtitle && (
-            <p className="text-xs font-body font-extralight" style={{ color: "rgba(240,235,225,0.65)" }}>{subtitle}</p>
+            <p className="text-xs font-body font-extralight" style={{ color: "var(--chrono-text-secondary)" }}>{subtitle}</p>
           )}
           {dateRange && (
             <span className="text-[10px] font-body font-extralight text-chrono-muted uppercase tracking-wider">{dateRange}</span>

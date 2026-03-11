@@ -119,7 +119,7 @@ export default function MemoryDetailOverlay({ event, isOpen, onClose, onEdit, on
 
                     {/* Description */}
                     {event.description && (
-                      <p className="text-base font-body font-extralight leading-relaxed mb-6" style={{ color: "rgba(240,235,225,0.75)" }}>
+                      <p className="text-base font-body font-extralight leading-relaxed mb-6" style={{ color: "var(--chrono-text-secondary)" }}>
                         {event.description}
                       </p>
                     )}

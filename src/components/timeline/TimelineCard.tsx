@@ -102,7 +102,7 @@ export default function TimelineCard({ event, index, isLeft = false, onEdit, onC
             {event.location && (
               <>
                 <span className="text-white/20 text-[10px]">/</span>
-                <span className="text-[10px] font-body font-extralight" style={{ color: "rgba(240,235,225,0.65)" }}>
+                <span className="text-[10px] font-body font-extralight" style={{ color: "var(--chrono-text-secondary)" }}>
                   {event.location}
                 </span>
               </>
@@ -118,7 +118,7 @@ export default function TimelineCard({ event, index, isLeft = false, onEdit, onC
           </h3>
 
           {event.description && (
-            <p className="text-sm font-body font-extralight leading-relaxed line-clamp-3" style={{ color: "rgba(240,235,225,0.65)" }}>
+            <p className="text-sm font-body font-extralight leading-relaxed line-clamp-3" style={{ color: "var(--chrono-text-secondary)" }}>
               {event.description}
             </p>
           )}

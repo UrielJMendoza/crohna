@@ -10,7 +10,8 @@ import EmptyState from "@/components/ui/EmptyState";
 
 const CATEGORIES = ["All", "Travel", "Achievement", "Education", "Life", "Career"];
 
-function getChapterForYear(_year: string) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function getChapterForYear(year: string) {
   return null; // Chapters are for demo data only; users build their own story
 }
 

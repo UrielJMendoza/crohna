@@ -6,6 +6,7 @@ import Footer from "@/components/ui/Footer";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import ScrollProgressBar from "@/components/ui/ScrollProgressBar";
 import ThemeProvider from "@/components/ui/ThemeProvider";
+import SessionProvider from "@/components/providers/SessionProvider";
 import AddMemoryButton from "@/components/ui/AddMemoryButton";
 
 const geistSans = localFont({
@@ -35,15 +36,17 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-body antialiased bg-chrono-bg text-chrono-text">
-        <ThemeProvider>
-          <ErrorBoundary>
-            <ScrollProgressBar />
-            <Navigation />
-            <main>{children}</main>
-            <AddMemoryButton />
-            <Footer />
-          </ErrorBoundary>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider>
+            <ErrorBoundary>
+              <ScrollProgressBar />
+              <Navigation />
+              <main>{children}</main>
+              <AddMemoryButton />
+              <Footer />
+            </ErrorBoundary>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

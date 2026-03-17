@@ -27,9 +27,34 @@ export default function ShareCard({ isOpen, onClose, type, title, content, stats
 
   const handleExport = useCallback(async () => {
     setExporting(true);
-    await new Promise((r) => setTimeout(r, 1000));
+    const text = `${title}\n${"=".repeat(title.length)}\n\n${content}${highlights ? "\n\nHighlights:\n" + highlights.map((h) => `  - ${h}`).join("\n") : ""}${stats ? "\n\nStats:\n" + Object.entries(stats).map(([k, v]) => `  ${k}: ${v}`).join("\n") : ""}`;
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `chrono-${type}-${title.replace(/\s+/g, "-").toLowerCase()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
     setExporting(false);
-  }, []);
+  }, [title, content, highlights, stats, type]);
+
+  const handleShare = useCallback(async () => {
+    const text = `${title}\n\n${content}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text });
+      } catch {
+        // User cancelled or share failed, fall back to copy
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [title, content]);
 
   return (
     <AnimatePresence>
@@ -138,7 +163,10 @@ export default function ShareCard({ isOpen, onClose, type, title, content, stats
                 <span className="text-[10px] text-chrono-muted uppercase tracking-wider">Download</span>
               </button>
 
-              <button className="flex flex-col items-center gap-2 py-3 bg-[var(--muted)] border border-[var(--line-strong)] hover:bg-[var(--card-bg)] transition-all">
+              <button
+                onClick={handleShare}
+                className="flex flex-col items-center gap-2 py-3 bg-[var(--muted)] border border-[var(--line-strong)] hover:bg-[var(--card-bg)] transition-all"
+              >
                 <svg className="w-5 h-5 text-chrono-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
                 </svg>

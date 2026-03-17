@@ -2,14 +2,26 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
 import GoogleConnectModal from "@/components/ui/GoogleConnectModal";
 
 export default function SettingsPage() {
-  const [demoMode, setDemoMode] = useState(true);
+  const { data: session } = useSession();
   const [notifications, setNotifications] = useState(false);
   const [saved, setSaved] = useState(false);
   const [connectModal, setConnectModal] = useState<"Google Photos" | "Google Calendar" | null>(null);
   const [connectedAccounts, setConnectedAccounts] = useState<Record<string, boolean>>({});
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (session?.user) {
+      setDisplayName(session.user.name || "");
+      setEmail(session.user.email || "");
+    }
+  }, [session]);
 
   useEffect(() => {
     const stored = localStorage.getItem("chrono-connected-accounts");
@@ -38,6 +50,55 @@ export default function SettingsPage() {
     localStorage.removeItem("chrono-start-mode");
   };
 
+  const handleExportData = async () => {
+    try {
+      const [eventsRes, storiesRes] = await Promise.all([
+        fetch("/api/events"),
+        fetch("/api/stories"),
+      ]);
+      const eventsData = await eventsRes.json();
+      const storiesData = await storiesRes.json();
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        events: eventsData.events || [],
+        stories: storiesData.stories || [],
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `chrono-export-${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Failed to export data. Please try again.");
+    }
+  };
+
+  const handleDeleteAllEvents = async () => {
+    if (!deleteConfirm) {
+      setDeleteConfirm(true);
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/events");
+      const data = await res.json();
+      const events = data.events || [];
+      for (const event of events) {
+        await fetch(`/api/events/${event.id}`, { method: "DELETE" });
+      }
+      setDeleteConfirm(false);
+      alert("All events deleted.");
+    } catch {
+      alert("Failed to delete events. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const userInitial = session?.user?.name?.[0] || session?.user?.email?.[0]?.toUpperCase() || "U";
+
   return (
     <div className="min-h-screen pt-24 pb-32">
       <section className="relative py-28 px-6 overflow-hidden">
@@ -64,12 +125,16 @@ export default function SettingsPage() {
           >
             <h3 className="text-sm font-display font-light text-chrono-text mb-4">Profile</h3>
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 border border-[var(--line-strong)] flex items-center justify-center text-chrono-accent text-xl font-display font-light">
-                U
-              </div>
+              {session?.user?.image ? (
+                <img src={session.user.image} alt="" className="w-16 h-16 rounded-full border border-[var(--line-strong)]" />
+              ) : (
+                <div className="w-16 h-16 border border-[var(--line-strong)] flex items-center justify-center text-chrono-accent text-xl font-display font-light rounded-full">
+                  {userInitial}
+                </div>
+              )}
               <div>
-                <div className="text-chrono-text font-body font-light">Demo User</div>
-                <div className="text-sm font-body font-light text-chrono-muted">demo@chrono.app</div>
+                <div className="text-chrono-text font-body font-light">{session?.user?.name || "User"}</div>
+                <div className="text-sm font-body font-light text-chrono-muted">{session?.user?.email || ""}</div>
               </div>
             </div>
 
@@ -78,7 +143,8 @@ export default function SettingsPage() {
                 <label className="section-label block mb-1.5">Display Name</label>
                 <input
                   type="text"
-                  defaultValue="Demo User"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
                   className="w-full bg-[var(--input-bg)] px-4 py-2.5 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] outline-none focus:border-[var(--line-hover)] transition-colors"
                 />
               </div>
@@ -86,8 +152,9 @@ export default function SettingsPage() {
                 <label className="section-label block mb-1.5">Email</label>
                 <input
                   type="email"
-                  defaultValue="demo@chrono.app"
-                  className="w-full bg-[var(--input-bg)] px-4 py-2.5 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] outline-none focus:border-[var(--line-hover)] transition-colors"
+                  value={email}
+                  disabled
+                  className="w-full bg-[var(--input-bg)] px-4 py-2.5 text-sm font-body font-light text-chrono-muted border border-[var(--line-strong)] outline-none cursor-not-allowed"
                 />
               </div>
             </div>
@@ -101,25 +168,6 @@ export default function SettingsPage() {
           >
             <h3 className="text-sm font-display font-light text-chrono-text mb-4">Preferences</h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-body font-light text-chrono-text">Demo Mode</div>
-                  <div className="text-xs font-body font-light text-chrono-muted">Show sample data on your timeline</div>
-                </div>
-                <button
-                  onClick={() => setDemoMode(!demoMode)}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${
-                    demoMode ? "bg-chrono-accent" : "bg-[var(--line-strong)]"
-                  }`}
-                >
-                  <div
-                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-chrono-bg transition-transform ${
-                      demoMode ? "translate-x-[22px]" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-              </div>
-
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-body font-light text-chrono-text">Story Notifications</div>
@@ -186,7 +234,10 @@ export default function SettingsPage() {
           >
             <h3 className="text-sm font-display font-light text-chrono-text mb-4">Data</h3>
             <div className="space-y-3">
-              <button className="text-sm font-body font-light text-chrono-muted hover:text-chrono-text transition-colors">
+              <button
+                onClick={handleExportData}
+                className="text-sm font-body font-light text-chrono-muted hover:text-chrono-text transition-colors"
+              >
                 Export all data
               </button>
               <br />
@@ -197,8 +248,12 @@ export default function SettingsPage() {
                 Reset onboarding
               </button>
               <br />
-              <button className="text-sm font-body font-light text-red-400/70 hover:text-red-400 transition-colors">
-                Delete all events
+              <button
+                onClick={handleDeleteAllEvents}
+                disabled={deleting}
+                className="text-sm font-body font-light text-red-400/70 hover:text-red-400 transition-colors disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : deleteConfirm ? "Click again to confirm deletion" : "Delete all events"}
               </button>
             </div>
           </motion.div>
@@ -207,8 +262,14 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="flex justify-end"
+            className="flex justify-between"
           >
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="px-8 py-3 text-sm font-body font-light text-red-400/70 hover:text-red-400 border border-[var(--line-strong)] hover:border-red-400/30 rounded-full transition-all duration-500"
+            >
+              Sign Out
+            </button>
             <button
               onClick={handleSave}
               className="px-8 py-3 text-sm font-body font-light bg-foreground text-background rounded-full hover:opacity-90 transition-colors duration-500"

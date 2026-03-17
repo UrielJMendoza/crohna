@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 
+const productLinks = [
+  { label: "Timeline", href: "/timeline" },
+  { label: "Stories", href: "/insights" },
+  { label: "Map", href: "/map" },
+  { label: "Insights", href: "/insights" },
+];
+
 export default function Footer() {
   return (
     <footer className="relative border-t border-[var(--line-strong)] bg-chrono-bg">
@@ -25,30 +32,29 @@ export default function Footer() {
               Product
             </h4>
             <div className="flex flex-col gap-3">
-              {["Timeline", "Stories", "Map", "Insights"].map((item) => (
-                <span
-                  key={item}
-                  className="text-sm font-body font-extralight text-chrono-muted hover:text-chrono-text cursor-pointer transition-colors duration-300"
+              {productLinks.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="text-sm font-body font-extralight text-chrono-muted hover:text-chrono-text transition-colors duration-300"
                 >
-                  {item}
-                </span>
+                  {item.label}
+                </Link>
               ))}
             </div>
           </div>
 
           <div>
             <h4 className="section-label mb-6">
-              Connect
+              Navigate
             </h4>
             <div className="flex flex-col gap-3">
-              {["Twitter", "GitHub", "Discord", "Blog"].map((item) => (
-                <span
-                  key={item}
-                  className="text-sm font-body font-extralight text-chrono-muted hover:text-chrono-text cursor-pointer transition-colors duration-300"
-                >
-                  {item}
-                </span>
-              ))}
+              <Link href="/settings" className="text-sm font-body font-extralight text-chrono-muted hover:text-chrono-text transition-colors duration-300">
+                Settings
+              </Link>
+              <Link href="/" className="text-sm font-body font-extralight text-chrono-muted hover:text-chrono-text transition-colors duration-300">
+                Home
+              </Link>
             </div>
           </div>
         </div>
@@ -57,16 +63,6 @@ export default function Footer() {
           <p className="text-xs font-body font-extralight text-chrono-muted">
             &copy; {new Date().getFullYear()} Chrono. All rights reserved.
           </p>
-          <div className="flex gap-6">
-            {["Privacy", "Terms", "Cookies"].map((item) => (
-              <span
-                key={item}
-                className="text-xs font-body font-extralight text-chrono-muted hover:text-chrono-text cursor-pointer transition-colors duration-300"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
     </footer>

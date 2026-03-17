@@ -2,27 +2,16 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
-import { demoEvents, getEventsByYear, TimelineEvent } from "@/data/demo";
+import { TimelineEvent, getEventsByYear } from "@/data/demo";
 import YearSection from "@/components/timeline/YearSection";
 import ChapterHeader from "@/components/timeline/ChapterHeader";
 import EventModal from "@/components/events/EventModal";
 import EmptyState from "@/components/ui/EmptyState";
 
-const chapters: Record<string, { title: string; subtitle: string }> = {
-  "college-start": { title: "College Years", subtitle: "Where it all began" },
-  "growth": { title: "Growth & Discovery", subtitle: "Firsts and foundations" },
-  "breakthrough": { title: "Breakthrough Year", subtitle: "Ambitions became achievements" },
-};
-
 const CATEGORIES = ["All", "Travel", "Achievement", "Education", "Life", "Career"];
 
 function getChapterForYear(year: string) {
-  switch (year) {
-    case "2022": return chapters["college-start"];
-    case "2023": return chapters["growth"];
-    case "2024": return chapters["breakthrough"];
-    default: return null;
-  }
+  return null; // Chapters are for demo data only; users build their own story
 }
 
 function CategoryFilterBar({ selected, onToggle }: { selected: Set<string>; onToggle: (cat: string) => void }) {
@@ -75,12 +64,22 @@ function YearScrubber({ years, activeYear, onYearClick }: { years: string[]; act
 }
 
 export default function TimelinePage() {
-  const [events, setEvents] = useState<TimelineEvent[]>(demoEvents);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeYear, setActiveYear] = useState<string>("");
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<TimelineEvent | undefined>();
-  const [demoMode, setDemoMode] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch("/api/events")
+      .then((res) => res.json())
+      .then((data) => {
+        setEvents(data.events || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   const handleToggleCategory = useCallback((cat: string) => {
     if (cat === "All") { setSelectedCategories(new Set()); return; }
@@ -110,18 +109,36 @@ export default function TimelinePage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleCreateEvent = useCallback((eventData: Partial<TimelineEvent>) => {
-    const newEvent: TimelineEvent = { id: eventData.id || `evt-${Date.now()}`, title: eventData.title || "", date: eventData.date || "", location: eventData.location, description: eventData.description, category: eventData.category, imageUrl: eventData.imageUrl, source: "manual" };
-    setEvents((prev) => [...prev, newEvent]);
+  const handleCreateEvent = useCallback(async (eventData: Partial<TimelineEvent>) => {
+    const res = await fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(eventData),
+    });
+    if (res.ok) {
+      const { event } = await res.json();
+      setEvents((prev) => [event, ...prev]);
+    }
   }, []);
 
-  const handleEditEvent = useCallback((eventData: Partial<TimelineEvent>) => {
-    setEvents((prev) => prev.map((e) => (e.id === eventData.id ? { ...e, ...eventData } : e)));
+  const handleEditEvent = useCallback(async (eventData: Partial<TimelineEvent>) => {
+    const res = await fetch(`/api/events/${eventData.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(eventData),
+    });
+    if (res.ok) {
+      const { event } = await res.json();
+      setEvents((prev) => prev.map((e) => (e.id === event.id ? event : e)));
+    }
     setEditingEvent(undefined);
   }, []);
 
-  const handleDeleteEvent = useCallback((id: string) => {
-    setEvents((prev) => prev.filter((e) => e.id !== id));
+  const handleDeleteEvent = useCallback(async (id: string) => {
+    const res = await fetch(`/api/events/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setEvents((prev) => prev.filter((e) => e.id !== id));
+    }
     setEditingEvent(undefined);
     setEventModalOpen(false);
   }, []);
@@ -130,6 +147,14 @@ export default function TimelinePage() {
     const el = document.querySelector(`[data-year="${year}"]`);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-24 pb-32 flex items-center justify-center">
+        <div className="text-sm font-body font-light text-chrono-muted animate-pulse">Loading your timeline...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-32">
@@ -143,9 +168,6 @@ export default function TimelinePage() {
             <button onClick={() => { setEditingEvent(undefined); setEventModalOpen(true); }} className="px-6 py-2.5 text-sm font-body font-light bg-foreground text-background rounded-full hover:opacity-90 transition-all duration-500 flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
               Add Event
-            </button>
-            <button onClick={() => setDemoMode(!demoMode)} className={`px-5 py-2.5 text-sm font-body font-light rounded-full transition-all duration-500 border ${demoMode ? "border-[var(--line-hover)] text-chrono-text bg-[var(--muted)]" : "border-[var(--line)] text-chrono-muted hover:border-[var(--line-hover)]"}`}>
-              Demo Mode {demoMode ? "On" : "Off"}
             </button>
           </div>
 

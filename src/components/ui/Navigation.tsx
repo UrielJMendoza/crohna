@@ -2,11 +2,12 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Home, Clock, BarChart3, Map, Settings, Search, Sun, Moon, X } from "lucide-react";
 import { NavBar } from "./tubelight-navbar";
 import { useTheme } from "./ThemeProvider";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -73,7 +74,6 @@ function SearchButton() {
         el.style.opacity = "1";
         el.style.transform = "";
         el.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-        // Reset border on the inner card div
         const inner = el.querySelector(".card-hover") as HTMLElement;
         if (inner) inner.style.borderColor = "";
       });
@@ -186,8 +186,81 @@ function SearchButton() {
   );
 }
 
+function UserMenu() {
+  const { data: session } = useSession();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener("click", handler, { capture: true });
+    return () => window.removeEventListener("click", handler, { capture: true });
+  }, [menuOpen]);
+
+  if (!session?.user) {
+    return (
+      <button
+        onClick={() => signIn("google")}
+        className="px-4 py-1.5 text-xs font-body font-light text-chrono-muted border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-chrono-text rounded-full transition-all"
+      >
+        Sign In
+      </button>
+    );
+  }
+
+  return (
+    <div ref={menuRef} className="relative">
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="w-8 h-8 rounded-full overflow-hidden border border-[var(--line-strong)] hover:border-[var(--line-hover)] transition-colors"
+      >
+        {session.user.image ? (
+          <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <span className="w-full h-full flex items-center justify-center text-xs font-body text-chrono-muted">
+            {session.user.name?.[0] || session.user.email?.[0]?.toUpperCase() || "U"}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
+            className="absolute right-0 top-full mt-2 w-48 bg-[var(--card-bg)] border border-[var(--line-strong)] shadow-lg z-50"
+          >
+            <div className="px-4 py-3 border-b border-[var(--line)]">
+              <div className="text-sm font-body font-light text-chrono-text truncate">{session.user.name}</div>
+              <div className="text-xs font-body font-light text-chrono-muted truncate">{session.user.email}</div>
+            </div>
+            <Link href="/settings" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm font-body font-light text-chrono-muted hover:text-chrono-text hover:bg-[var(--muted)] transition-colors">
+              Settings
+            </Link>
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="w-full text-left px-4 py-2.5 text-sm font-body font-light text-red-400/70 hover:text-red-400 hover:bg-[var(--muted)] transition-colors"
+            >
+              Sign Out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -201,6 +274,7 @@ export default function Navigation() {
     <>
       <SearchButton />
       <ThemeToggle />
+      <UserMenu />
     </>
   );
 
@@ -287,12 +361,44 @@ export default function Navigation() {
               ))}
             </div>
             <div className="mt-12 flex flex-col gap-4">
-              <button className="w-full py-3 text-sm font-body font-light text-chrono-muted border border-[var(--line-strong)] rounded-full">
-                Sign In
-              </button>
-              <button className="w-full py-3 text-sm font-body font-light bg-foreground text-background rounded-full">
-                Get Started
-              </button>
+              {session?.user ? (
+                <>
+                  <div className="flex items-center gap-3 mb-2">
+                    {session.user.image ? (
+                      <img src={session.user.image} alt="" className="w-10 h-10 rounded-full" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full border border-[var(--line-strong)] flex items-center justify-center text-chrono-muted">
+                        {session.user.name?.[0] || "U"}
+                      </div>
+                    )}
+                    <div>
+                      <div className="text-sm font-body font-light text-chrono-text">{session.user.name}</div>
+                      <div className="text-xs font-body font-light text-chrono-muted">{session.user.email}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/" }); }}
+                    className="w-full py-3 text-sm font-body font-light text-red-400/70 border border-[var(--line-strong)] rounded-full"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => { setMobileOpen(false); signIn("google"); }}
+                    className="w-full py-3 text-sm font-body font-light text-chrono-muted border border-[var(--line-strong)] rounded-full"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => { setMobileOpen(false); signIn("google"); }}
+                    className="w-full py-3 text-sm font-body font-light bg-foreground text-background rounded-full"
+                  >
+                    Get Started
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         )}

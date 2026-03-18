@@ -12,6 +12,7 @@ interface ShimmerButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export default function ShimmerButton({
   children,
   className,
+  style: styleProp,
   ...props
 }: ShimmerButtonProps) {
   const { theme } = useTheme();
@@ -27,7 +28,7 @@ export default function ShimmerButton({
         "hover:scale-[1.02] active:scale-[0.98]",
         className,
       )}
-      style={{ background }}
+      style={{ background, ...styleProp }}
       {...props}
     >
       {/* shimmer */}

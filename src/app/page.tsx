@@ -42,8 +42,8 @@ function AnimatedWord() {
   }, []);
 
   return (
-    <span className="inline-block relative overflow-hidden align-bottom" style={{ lineHeight: "inherit" }}>
-      {/* invisible sizer — holds natural width/height for "beautifully" */}
+    <span className="inline-block relative overflow-hidden align-bottom text-right" style={{ lineHeight: "inherit", paddingRight: "0.05em" }}>
+      {/* invisible sizer — holds natural width/height for longest word */}
       <span className="invisible italic" aria-hidden="true">beautifully</span>
       <AnimatePresence mode="wait">
         <motion.span
@@ -52,7 +52,7 @@ function AnimatedWord() {
           animate={{ y: "0%", opacity: 1 }}
           exit={{ y: "-110%", opacity: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0 italic text-chrono-accent"
+          className="absolute inset-0 italic text-chrono-accent text-right"
           style={{ lineHeight: "inherit" }}
         >
           {HERO_WORDS[index]}
@@ -106,7 +106,7 @@ function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-b from-chrono-bg/40 via-transparent to-chrono-bg z-[2] pointer-events-none" />
 
       <motion.div
-        style={{ y, opacity, scale }}
+        style={{ y, opacity, scale, pointerEvents: "auto" }}
         className="relative z-10 text-center px-6 max-w-5xl mx-auto"
       >
         <motion.div
@@ -140,11 +140,9 @@ function HeroSection() {
           A visual timeline of your memories, milestones, and places.
         </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.1, duration: 1 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
+        <div
+          className="relative z-20 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up"
+          style={{ animationDelay: "1.1s", animationFillMode: "both" }}
         >
           <ShimmerButton onClick={handleGetStarted}>
             Get Started
@@ -155,7 +153,7 @@ function HeroSection() {
           >
             View Insights
           </Link>
-        </motion.div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0 }}

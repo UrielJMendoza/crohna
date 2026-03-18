@@ -303,9 +303,36 @@ export default function TimelinePage() {
 
       <YearScrubber years={allYears} activeYear={activeYear} onYearClick={scrollToYear} />
 
-      {filteredEvents.length === 0 && selectedCategories.size > 0 ? (
+      {searchQuery && (
+        <motion.div
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-4"
+        >
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-body font-light text-chrono-muted border border-[var(--line)] rounded-full">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            {filteredEvents.length} result{filteredEvents.length !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
+          </span>
+        </motion.div>
+      )}
+
+      {filteredEvents.length === 0 && (searchQuery || selectedCategories.size > 0) ? (
         <div className="text-center py-32">
-          <p className="text-sm font-body font-extralight text-chrono-muted italic">No memories in the selected categories.</p>
+          <svg className="w-10 h-10 mx-auto mb-4 text-chrono-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <p className="text-sm font-body font-extralight text-chrono-muted italic">
+            {searchQuery
+              ? `No memories matching "${searchQuery}"`
+              : "No memories in the selected categories."}
+          </p>
+          {searchQuery && (
+            <p className="text-xs font-body font-extralight text-chrono-muted mt-2">
+              Try a different search term or clear your filters
+            </p>
+          )}
         </div>
       ) : events.length === 0 && !isShowingDemo ? (
         <EmptyState icon="timeline" title="Your story starts here" description="Add your first life event to begin building your personal timeline. Every moment matters." actionLabel="Create First Event" onAction={() => setEventModalOpen(true)} />

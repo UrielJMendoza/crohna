@@ -114,6 +114,17 @@ export default function MapPage() {
         </motion.div>
       </section>
 
+      {searchQuery && (
+        <div className="text-center mb-4">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-body font-light text-chrono-muted border border-[var(--line)] rounded-full">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            {displayEvents.length} result{displayEvents.length !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
+          </span>
+        </div>
+      )}
+
       {displayEvents.length === 0 && !isShowingDemo ? (
         <EmptyState
           icon="timeline"

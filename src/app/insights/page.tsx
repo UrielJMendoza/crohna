@@ -304,6 +304,22 @@ export default function InsightsPage() {
               ))}
             </div>
 
+            {searchQuery && (
+              <div className="text-center mb-6">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-body font-light text-chrono-muted border border-[var(--line)] rounded-full">
+                  {filteredStories.length} stor{filteredStories.length !== 1 ? "ies" : "y"} matching &ldquo;{searchQuery}&rdquo;
+                </span>
+              </div>
+            )}
+
+            {filteredStories.length === 0 && searchQuery && (
+              <div className="text-center py-16">
+                <p className="text-sm font-body font-extralight text-chrono-muted italic">
+                  No stories matching &ldquo;{searchQuery}&rdquo;
+                </p>
+              </div>
+            )}
+
             <div className="space-y-10">
               <AnimatePresence mode="wait">
                 {generating && <AIStoryLoadingSkeleton />}

@@ -16,7 +16,7 @@ if (missingVars.length > 0 && process.env.NODE_ENV === "production") {
 
 if (missingVars.length > 0 && process.env.NODE_ENV !== "production") {
   console.warn(
-    `[Chrono] Warning: Missing environment variables: ${missingVars.join(", ")}`
+    `[Crohna] Warning: Missing environment variables: ${missingVars.join(", ")}`
   );
 }
 

@@ -3,12 +3,10 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { demoEvents, demoStories, getEventsByYear, TimelineEvent, AIStory } from "@/data/demo";
 import TimelineCard from "@/components/timeline/TimelineCard";
 import AIStorySummary from "@/components/timeline/AIStorySummary";
-import OnboardingWizard from "@/components/onboarding/OnboardingWizard";
 import ParticleField from "@/components/three/ParticleField";
 import MarqueeTicker from "@/components/ui/MarqueeTicker";
 import LoadingScreen from "@/components/ui/LoadingScreen";
@@ -816,28 +814,6 @@ function CTASection() {
 }
 
 export default function Home() {
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const router = useRouter();
-
-  useEffect(() => {
-    const completed = localStorage.getItem("chrono-onboarding-complete");
-    if (!completed) {
-      setShowOnboarding(true);
-    }
-  }, []);
-
-  const handleOnboardingComplete = (choice: "demo" | "manual" | "import") => {
-    localStorage.setItem("chrono-onboarding-complete", "true");
-    localStorage.setItem("chrono-start-mode", choice);
-    setShowOnboarding(false);
-
-    if (choice === "demo" || choice === "manual") {
-      router.push("/timeline");
-    } else if (choice === "import") {
-      router.push("/settings");
-    }
-  };
-
   const { data: session } = useSession();
   const [userEvents, setUserEvents] = useState<TimelineEvent[]>([]);
   const [userStories, setUserStories] = useState<AIStory[]>([]);
@@ -858,12 +834,6 @@ export default function Home() {
   return (
     <>
       <LoadingScreen />
-
-      <AnimatePresence>
-        {showOnboarding && (
-          <OnboardingWizard onComplete={handleOnboardingComplete} />
-        )}
-      </AnimatePresence>
 
       <HeroSection />
       <OnThisDayWidget events={userEvents} />

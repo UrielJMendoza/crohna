@@ -12,6 +12,7 @@ import CityChart from "@/components/insights/CityChart";
 import ShareCard from "@/components/share/ShareCard";
 import { AIStoryLoadingSkeleton } from "@/components/ui/Skeletons";
 import EmptyState from "@/components/ui/EmptyState";
+import { toast } from "sonner";
 
 interface InsightStats {
   totalEvents: number;
@@ -47,8 +48,8 @@ export default function InsightsPage() {
       return;
     }
     Promise.all([
-      fetch("/api/stories").then((r) => r.json()),
-      fetch("/api/insights").then((r) => r.json()),
+      fetch("/api/stories").then((r) => r.ok ? r.json() : { stories: [] }),
+      fetch("/api/insights").then((r) => r.ok ? r.json() : { stats: null }),
     ])
       .then(([storiesData, insightsData]) => {
         const realStories = storiesData.stories || [];
@@ -64,7 +65,12 @@ export default function InsightsPage() {
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setStories(demoStories);
+        setStats(demoInsightStats);
+        setIsShowingDemo(true);
+        setLoading(false);
+      });
   }, [session, status]);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -336,6 +342,7 @@ export default function InsightsPage() {
                       <button
                         onClick={async () => {
                           await navigator.clipboard.writeText(story.summary);
+                          toast.success("Copied to clipboard");
                         }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-body font-light text-chrono-muted hover:text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] transition-all"
                       >

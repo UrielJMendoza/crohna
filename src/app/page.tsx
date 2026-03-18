@@ -42,16 +42,18 @@ function AnimatedWord() {
   }, []);
 
   return (
-    <span className="inline-flex justify-end relative overflow-hidden align-baseline" style={{ width: "5.2em", height: "1.15em", verticalAlign: "baseline" }}>
+    <span className="inline-block relative overflow-hidden align-bottom" style={{ lineHeight: "inherit" }}>
+      {/* invisible sizer — holds natural width/height for "beautifully" */}
+      <span className="invisible italic" aria-hidden="true">beautifully</span>
       <AnimatePresence mode="wait">
         <motion.span
           key={HERO_WORDS[index]}
-          initial={{ y: "100%", opacity: 0 }}
+          initial={{ y: "110%", opacity: 0 }}
           animate={{ y: "0%", opacity: 1 }}
-          exit={{ y: "-100%", opacity: 0 }}
+          exit={{ y: "-110%", opacity: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="absolute inset-0 whitespace-nowrap italic text-chrono-accent text-right"
-          style={{ lineHeight: "1.15" }}
+          className="absolute inset-0 italic text-chrono-accent"
+          style={{ lineHeight: "inherit" }}
         >
           {HERO_WORDS[index]}
         </motion.span>
@@ -96,12 +98,12 @@ function HeroSection() {
       <ParticleField />
 
       <div
-        className="absolute inset-0 z-[1]"
+        className="absolute inset-0 z-[1] pointer-events-none"
         style={{
           background: "radial-gradient(ellipse 60% 50% at 50% 40%, var(--chrono-glow) 0%, transparent 70%)",
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-chrono-bg/40 via-transparent to-chrono-bg z-[2]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-chrono-bg/40 via-transparent to-chrono-bg z-[2] pointer-events-none" />
 
       <motion.div
         style={{ y, opacity, scale }}

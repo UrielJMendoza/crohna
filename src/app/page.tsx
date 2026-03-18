@@ -29,7 +29,7 @@ function FadeUp({ children, delay = 0, className = "" }: { children: React.React
   );
 }
 
-const HERO_WORDS = ["beautifully", "elegantly", "perfectly", "intimately", "vividly", "honestly", "timelessly"];
+const HERO_WORDS = ["beautifully", "elegantly"] as const;
 
 function AnimatedWord() {
   const [index, setIndex] = useState(0);
@@ -37,21 +37,21 @@ function AnimatedWord() {
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % HERO_WORDS.length);
-    }, 5000);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <span className="inline-block relative overflow-hidden align-baseline" style={{ width: "5.5em", height: "1.2em", verticalAlign: "baseline" }}>
+    <span className="inline-flex justify-end relative overflow-hidden align-baseline" style={{ width: "5.2em", height: "1.15em", verticalAlign: "baseline" }}>
       <AnimatePresence mode="wait">
         <motion.span
           key={HERO_WORDS[index]}
-          initial={{ y: "110%", opacity: 0 }}
+          initial={{ y: "100%", opacity: 0 }}
           animate={{ y: "0%", opacity: 1 }}
-          exit={{ y: "-110%", opacity: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 whitespace-nowrap italic text-chrono-accent"
-          style={{ lineHeight: "1.2" }}
+          exit={{ y: "-100%", opacity: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0 whitespace-nowrap italic text-chrono-accent text-right"
+          style={{ lineHeight: "1.15" }}
         >
           {HERO_WORDS[index]}
         </motion.span>
@@ -63,13 +63,11 @@ function AnimatedWord() {
 function useGetStarted() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [pending, setPending] = useState(false);
 
   const trigger = useCallback(() => {
-    if (pending) return;
     if (status === "loading") {
-      // Session still resolving — wait briefly then retry
-      setPending(true);
+      // Session still resolving — default to sign in flow
+      signIn("google", { callbackUrl: "/timeline" });
       return;
     }
     if (session) {
@@ -77,25 +75,13 @@ function useGetStarted() {
     } else {
       signIn("google", { callbackUrl: "/timeline" });
     }
-  }, [session, status, router, pending]);
+  }, [session, status, router]);
 
-  // If pending and status resolves, fire the action
-  useEffect(() => {
-    if (pending && status !== "loading") {
-      setPending(false);
-      if (session) {
-        router.push("/timeline");
-      } else {
-        signIn("google", { callbackUrl: "/timeline" });
-      }
-    }
-  }, [pending, status, session, router]);
-
-  return { trigger, pending: pending || status === "loading" };
+  return { trigger };
 }
 
 function HeroSection() {
-  const { trigger: handleGetStarted, pending: getStartedPending } = useGetStarted();
+  const { trigger: handleGetStarted } = useGetStarted();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -158,13 +144,14 @@ function HeroSection() {
           transition={{ delay: 1.1, duration: 1 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4"
         >
-          <ShimmerButton onClick={handleGetStarted} disabled={getStartedPending}>
-            {getStartedPending ? "Loading..." : "Get Started"}
+          <ShimmerButton onClick={handleGetStarted}>
+            Get Started
           </ShimmerButton>
-          <Link href="/insights">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-chrono-text hover:text-foreground border border-[var(--line-strong)] hover:border-[var(--line-hover)] rounded-full transition-all duration-500 text-sm font-body font-light tracking-wide">
-              View Insights
-            </button>
+          <Link
+            href="/insights"
+            className="px-6 py-3 md:px-10 md:py-4 text-chrono-text hover:text-foreground border border-[var(--line-strong)] hover:border-[var(--line-hover)] rounded-full transition-all duration-500 text-sm font-body font-light tracking-wide inline-block"
+          >
+            View Insights
           </Link>
         </motion.div>
 
@@ -574,10 +561,11 @@ function TimelinePreview({ events }: { events?: TimelineEvent[] }) {
         </div>
 
         <FadeUp className="text-center">
-          <Link href="/timeline">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500">
-              Explore Full Timeline
-            </button>
+          <Link
+            href="/timeline"
+            className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500 inline-block"
+          >
+            Explore Full Timeline
           </Link>
         </FadeUp>
       </div>
@@ -689,10 +677,11 @@ function MapPreview() {
         </FadeUp>
 
         <FadeUp className="text-center mt-14">
-          <Link href="/map">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500">
-              Explore Life Map
-            </button>
+          <Link
+            href="/map"
+            className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500 inline-block"
+          >
+            Explore Life Map
           </Link>
         </FadeUp>
       </div>
@@ -719,10 +708,11 @@ function StoriesPreview({ stories }: { stories?: AIStory[] }) {
         <AIStorySummary story={stories && stories.length > 0 ? stories[0] : demoStories[0]} index={0} />
 
         <FadeUp className="text-center mt-16">
-          <Link href="/insights">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500">
-              View All Stories
-            </button>
+          <Link
+            href="/insights"
+            className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500 inline-block"
+          >
+            View All Stories
           </Link>
         </FadeUp>
       </div>
@@ -785,7 +775,7 @@ function TestimonialsSection() {
 }
 
 function CTASection() {
-  const { trigger: handleGetStarted, pending: getStartedPending } = useGetStarted();
+  const { trigger: handleGetStarted } = useGetStarted();
   return (
     <section className="relative py-[80px] md:py-[160px] px-6">
       <FadeUp className="relative max-w-3xl mx-auto text-center">
@@ -799,13 +789,14 @@ function CTASection() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <ShimmerButton className="px-12 py-4 text-base" onClick={handleGetStarted} disabled={getStartedPending}>
-            {getStartedPending ? "Loading..." : "Get Started"}
+          <ShimmerButton className="px-12 py-4 text-base" onClick={handleGetStarted}>
+            Get Started
           </ShimmerButton>
-          <Link href="/insights">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-chrono-text hover:text-foreground border border-[var(--line-strong)] hover:border-[var(--line-hover)] rounded-full transition-all duration-500 text-sm font-body font-light">
-              See a Demo
-            </button>
+          <Link
+            href="/insights"
+            className="px-6 py-3 md:px-10 md:py-4 text-chrono-text hover:text-foreground border border-[var(--line-strong)] hover:border-[var(--line-hover)] rounded-full transition-all duration-500 text-sm font-body font-light inline-block"
+          >
+            See a Demo
           </Link>
         </div>
 

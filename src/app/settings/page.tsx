@@ -207,8 +207,9 @@ export default function SettingsPage() {
               Sign in to access your account settings, preferences, and connected services.
             </p>
             <button
+              type="button"
               onClick={() => signIn("google", { callbackUrl: "/settings" })}
-              className="px-8 py-3 text-sm font-body font-light bg-foreground text-background rounded-full hover:opacity-90 transition-all duration-500"
+              className="relative z-10 px-8 py-3 text-sm font-body font-light bg-foreground text-background rounded-full hover:opacity-90 transition-all duration-500 cursor-pointer"
             >
               Sign in with Google
             </button>

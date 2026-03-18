@@ -3,15 +3,13 @@
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useSession, signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { demoEvents, demoStories, getEventsByYear, TimelineEvent, AIStory } from "@/data/demo";
 import TimelineCard from "@/components/timeline/TimelineCard";
 import AIStorySummary from "@/components/timeline/AIStorySummary";
 import ParticleField from "@/components/three/ParticleField";
 import MarqueeTicker from "@/components/ui/MarqueeTicker";
 import LoadingScreen from "@/components/ui/LoadingScreen";
-import ShimmerButton from "@/components/ui/shimmer-button";
 import { useEvents } from "@/hooks/useEvents";
 import { useStories } from "@/hooks/useStories";
 
@@ -29,7 +27,7 @@ function FadeUp({ children, delay = 0, className = "" }: { children: React.React
   );
 }
 
-const HERO_WORDS = ["beautifully", "elegantly", "perfectly", "intimately", "vividly", "honestly", "timelessly"];
+const HERO_WORDS = ["beautifully", "elegantly"] as const;
 
 function AnimatedWord() {
   const [index, setIndex] = useState(0);
@@ -37,21 +35,23 @@ function AnimatedWord() {
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % HERO_WORDS.length);
-    }, 5000);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <span className="inline-block relative overflow-hidden align-baseline" style={{ width: "5.5em", height: "1.2em", verticalAlign: "baseline" }}>
+    <span className="inline-block relative overflow-hidden align-bottom text-right" style={{ lineHeight: "inherit", paddingRight: "0.08em", paddingBottom: "0.1em" }}>
+      {/* invisible sizer — holds natural width/height for longest word */}
+      <span className="invisible italic" aria-hidden="true">beautifully</span>
       <AnimatePresence mode="wait">
         <motion.span
           key={HERO_WORDS[index]}
           initial={{ y: "110%", opacity: 0 }}
           animate={{ y: "0%", opacity: 1 }}
           exit={{ y: "-110%", opacity: 0 }}
-          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 whitespace-nowrap italic text-chrono-accent"
-          style={{ lineHeight: "1.2" }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute inset-0 italic text-chrono-accent text-right"
+          style={{ lineHeight: "inherit" }}
         >
           {HERO_WORDS[index]}
         </motion.span>
@@ -60,49 +60,40 @@ function AnimatedWord() {
   );
 }
 
-function useGetStarted() {
+
+function HeroButtons() {
   const { data: session, status } = useSession();
-  const router = useRouter();
-  const [pending, setPending] = useState(false);
 
-  const trigger = useCallback(() => {
-    if (pending) return;
-    if (status === "loading") {
-      // Session still resolving — wait briefly then retry
-      setPending(true);
-      return;
-    }
-    if (session) {
-      router.push("/timeline");
-    } else {
-      signIn("google", { callbackUrl: "/timeline" });
-    }
-  }, [session, status, router, pending]);
+  const getStartedHref =
+    status !== "loading" && session
+      ? "/timeline"
+      : "/api/auth/signin/google?callbackUrl=%2Ftimeline";
 
-  // If pending and status resolves, fire the action
-  useEffect(() => {
-    if (pending && status !== "loading") {
-      setPending(false);
-      if (session) {
-        router.push("/timeline");
-      } else {
-        signIn("google", { callbackUrl: "/timeline" });
-      }
-    }
-  }, [pending, status, session, router]);
-
-  return { trigger, pending: pending || status === "loading" };
+  return (
+    <div className="absolute left-0 right-0 z-50 flex flex-col sm:flex-row items-center justify-center gap-4" style={{ bottom: "18vh" }}>
+      <a
+        href={getStartedHref}
+        className="inline-flex cursor-pointer items-center justify-center rounded-full px-10 py-4 text-sm font-body font-light tracking-wide transition-all duration-300 bg-[var(--foreground)] text-[var(--background)] hover:scale-[1.02] active:scale-[0.98]"
+      >
+        Get Started
+      </a>
+      <a
+        href="/insights"
+        className="px-6 py-3 md:px-10 md:py-4 text-chrono-text hover:text-foreground border border-[var(--line-strong)] hover:border-[var(--line-hover)] rounded-full transition-all duration-500 text-sm font-body font-light tracking-wide inline-block cursor-pointer"
+      >
+        View Insights
+      </a>
+    </div>
+  );
 }
 
 function HeroSection() {
-  const { trigger: handleGetStarted, pending: getStartedPending } = useGetStarted();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end start"],
   });
   const y = useTransform(scrollYProgress, [0, 1], [0, 200]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.8], [1, 0.97]);
 
   return (
@@ -110,15 +101,15 @@ function HeroSection() {
       <ParticleField />
 
       <div
-        className="absolute inset-0 z-[1]"
+        className="absolute inset-0 z-[1] pointer-events-none"
         style={{
           background: "radial-gradient(ellipse 60% 50% at 50% 40%, var(--chrono-glow) 0%, transparent 70%)",
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-chrono-bg/40 via-transparent to-chrono-bg z-[2]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-chrono-bg/40 via-transparent to-chrono-bg z-[2] pointer-events-none" />
 
       <motion.div
-        style={{ y, opacity, scale }}
+        style={{ y, scale }}
         className="relative z-10 text-center px-6 max-w-5xl mx-auto"
       >
         <motion.div
@@ -147,42 +138,24 @@ function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 1.2 }}
-          className="text-base md:text-lg font-body font-extralight max-w-lg mx-auto mb-16 leading-relaxed text-chrono-muted"
+          className="text-base md:text-lg font-body font-extralight max-w-lg mx-auto leading-relaxed text-chrono-muted"
         >
           A visual timeline of your memories, milestones, and places.
         </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.1, duration: 1 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4"
-        >
-          <ShimmerButton onClick={handleGetStarted} disabled={getStartedPending}>
-            {getStartedPending ? "Loading..." : "Get Started"}
-          </ShimmerButton>
-          <Link href="/insights">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-chrono-text hover:text-foreground border border-[var(--line-strong)] hover:border-[var(--line-hover)] rounded-full transition-all duration-500 text-sm font-body font-light tracking-wide">
-              View Insights
-            </button>
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2, duration: 1.5 }}
-          className="absolute bottom-16 left-1/2 -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="w-5 h-9 border border-[var(--line-strong)] rounded-full flex justify-center pt-2"
-          >
-            <div className="w-0.5 h-1.5 bg-chrono-muted rounded-full" />
-          </motion.div>
-        </motion.div>
       </motion.div>
+
+      {/* Buttons placed OUTSIDE the motion.div to avoid transform stacking context trapping pointer events */}
+      <HeroButtons />
+
+      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 pointer-events-none z-[1]">
+        <motion.div
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="w-5 h-9 border border-[var(--line-strong)] rounded-full flex justify-center pt-2"
+        >
+          <div className="w-0.5 h-1.5 bg-chrono-muted rounded-full" />
+        </motion.div>
+      </div>
     </section>
   );
 }
@@ -574,10 +547,11 @@ function TimelinePreview({ events }: { events?: TimelineEvent[] }) {
         </div>
 
         <FadeUp className="text-center">
-          <Link href="/timeline">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500">
-              Explore Full Timeline
-            </button>
+          <Link
+            href="/timeline"
+            className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500 inline-block"
+          >
+            Explore Full Timeline
           </Link>
         </FadeUp>
       </div>
@@ -689,10 +663,11 @@ function MapPreview() {
         </FadeUp>
 
         <FadeUp className="text-center mt-14">
-          <Link href="/map">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500">
-              Explore Life Map
-            </button>
+          <Link
+            href="/map"
+            className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500 inline-block"
+          >
+            Explore Life Map
           </Link>
         </FadeUp>
       </div>
@@ -719,10 +694,11 @@ function StoriesPreview({ stories }: { stories?: AIStory[] }) {
         <AIStorySummary story={stories && stories.length > 0 ? stories[0] : demoStories[0]} index={0} />
 
         <FadeUp className="text-center mt-16">
-          <Link href="/insights">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500">
-              View All Stories
-            </button>
+          <Link
+            href="/insights"
+            className="px-6 py-3 md:px-10 md:py-4 text-sm font-body font-light text-chrono-text border border-[var(--line-strong)] hover:border-[var(--line-hover)] hover:text-foreground rounded-full transition-all duration-500 inline-block"
+          >
+            View All Stories
           </Link>
         </FadeUp>
       </div>
@@ -785,7 +761,12 @@ function TestimonialsSection() {
 }
 
 function CTASection() {
-  const { trigger: handleGetStarted, pending: getStartedPending } = useGetStarted();
+  const { data: session, status } = useSession();
+  const getStartedHref =
+    status !== "loading" && session
+      ? "/timeline"
+      : "/api/auth/signin/google?callbackUrl=%2Ftimeline";
+
   return (
     <section className="relative py-[80px] md:py-[160px] px-6">
       <FadeUp className="relative max-w-3xl mx-auto text-center">
@@ -798,15 +779,19 @@ function CTASection() {
           Transform your memories into a beautiful, interactive timeline.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <ShimmerButton className="px-12 py-4 text-base" onClick={handleGetStarted} disabled={getStartedPending}>
-            {getStartedPending ? "Loading..." : "Get Started"}
-          </ShimmerButton>
-          <Link href="/insights">
-            <button className="px-6 py-3 md:px-10 md:py-4 text-chrono-text hover:text-foreground border border-[var(--line-strong)] hover:border-[var(--line-hover)] rounded-full transition-all duration-500 text-sm font-body font-light">
-              See a Demo
-            </button>
-          </Link>
+        <div className="relative z-50 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a
+            href={getStartedHref}
+            className="group relative inline-flex cursor-pointer items-center justify-center overflow-hidden whitespace-nowrap rounded-full px-12 py-4 text-base font-body font-light tracking-wide transition-all duration-300 bg-[var(--foreground)] text-[var(--background)] hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Get Started
+          </a>
+          <a
+            href="/insights"
+            className="px-6 py-3 md:px-10 md:py-4 text-chrono-text hover:text-foreground border border-[var(--line-strong)] hover:border-[var(--line-hover)] rounded-full transition-all duration-500 text-sm font-body font-light inline-block cursor-pointer"
+          >
+            See a Demo
+          </a>
         </div>
 
         <motion.div

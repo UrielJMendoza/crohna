@@ -18,6 +18,7 @@ export default function ShareCard({ isOpen, onClose, type, title, content, stats
   const cardRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
   const [exporting, setExporting] = useState(false);
   useFocusTrap(modalRef, isOpen);
 
@@ -36,9 +37,11 @@ export default function ShareCard({ isOpen, onClose, type, title, content, stats
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      setCopyFailed(false);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard permission denied — silent fail
+      setCopyFailed(true);
+      setTimeout(() => setCopyFailed(false), 3000);
     }
   }, [title, content, highlights]);
 
@@ -95,6 +98,9 @@ export default function ShareCard({ isOpen, onClose, type, title, content, stats
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.97 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Share & Export"
             className="fixed inset-x-4 top-[10%] md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg z-[70] bg-chrono-surface border border-[var(--line-strong)] overflow-hidden"
           >
             <div className="flex items-center justify-between p-6 border-b border-[var(--line-strong)]">
@@ -168,7 +174,7 @@ export default function ShareCard({ isOpen, onClose, type, title, content, stats
                   </svg>
                 )}
                 <span className="text-[10px] text-chrono-muted uppercase tracking-wider">
-                  {copied ? "Copied" : "Copy"}
+                  {copied ? "Copied" : copyFailed ? "Failed" : "Copy"}
                 </span>
               </button>
 

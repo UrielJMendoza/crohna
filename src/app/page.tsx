@@ -375,7 +375,7 @@ function PlayYourStorySection({ events }: { events?: TimelineEvent[] }) {
               className="group flex items-center gap-4 px-6 py-3 sm:px-10 sm:py-5 bg-[var(--card-bg)] border border-[var(--line)] rounded-full card-hover"
             >
               <div className="w-12 h-12 rounded-full border border-[var(--line-strong)] flex items-center justify-center group-hover:border-[var(--line-hover)] transition-colors duration-500">
-                <svg className="w-5 h-5 text-chrono-muted ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-chrono-muted ml-0.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               </div>

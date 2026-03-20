@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const limit = Math.min(Number(searchParams.get("limit")) || 50, 100);
+    const limit = Math.min(Math.max(Number(searchParams.get("limit")) || 50, 1), 100);
     const cursor = searchParams.get("cursor") || undefined;
 
     const dbStories = await prisma.aIStory.findMany({
@@ -101,6 +101,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (period !== undefined && period !== null) {
+      if (typeof period !== "string" || period.length > 200) {
+        return NextResponse.json({ error: "Period must be a string under 200 characters" }, { status: 400 });
+      }
+    }
+
     // Fetch user's events for the period to generate content
     const storyPeriod = period || (year ? `January – December ${year}` : "All Time");
     const eventWhere: Record<string, unknown> = { userId: user.id, deletedAt: null };
@@ -115,6 +121,7 @@ export async function POST(req: NextRequest) {
     const events = await prisma.event.findMany({
       where: eventWhere,
       orderBy: { date: "asc" },
+      take: 10_000,
     });
 
     const eventSummaries = events.map((e) => ({

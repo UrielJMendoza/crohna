@@ -18,11 +18,12 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       refresh_token: token.refreshToken as string,
     }),
   });
-  const data = await response.json();
 
   if (!response.ok) {
     return { ...token, error: "RefreshAccessTokenError" };
   }
+
+  const data = await response.json();
 
   return {
     ...token,
@@ -94,8 +95,9 @@ export const authOptions: NextAuthOptions = {
         token.sub = user.id;
       }
 
-      // Return token if it hasn't expired yet
-      if (Date.now() < (token.accessTokenExpires as number)) {
+      // Return token if it hasn't expired yet (refresh 5 min early to avoid edge-case failures)
+      const FIVE_MINUTES = 5 * 60 * 1000;
+      if (Date.now() + FIVE_MINUTES < (token.accessTokenExpires as number)) {
         return token;
       }
 

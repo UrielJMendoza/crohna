@@ -199,18 +199,19 @@ function TimelinePage() {
   const allYears = Object.keys(getEventsByYear(events));
   const years = Object.keys(eventsByYear);
 
+  const handleScroll = useCallback(() => {
+    const yearElements = document.querySelectorAll("[data-year]");
+    let current = "";
+    yearElements.forEach((el) => {
+      if (el.getBoundingClientRect().top <= 200) current = el.getAttribute("data-year") || "";
+    });
+    if (current) setActiveYear(current);
+  }, []);
+
   useEffect(() => {
-    const handleScroll = () => {
-      const yearElements = document.querySelectorAll("[data-year]");
-      let current = "";
-      yearElements.forEach((el) => {
-        if (el.getBoundingClientRect().top <= 200) current = el.getAttribute("data-year") || "";
-      });
-      if (current) setActiveYear(current);
-    };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [handleScroll]);
 
   const handleCreateEvent = useCallback(async (eventData: Partial<TimelineEvent>) => {
     try {

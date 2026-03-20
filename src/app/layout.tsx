@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
 import "./globals.css";
 import Navigation from "@/components/ui/Navigation";
 import Footer from "@/components/ui/Footer";
@@ -68,7 +69,9 @@ export default function RootLayout({
           <ThemeProvider>
             <ErrorBoundary>
               <ScrollProgressBar />
-              <Navigation />
+              <Suspense>
+                <Navigation />
+              </Suspense>
               <SessionErrorBanner />
               <main>{children}</main>
               <AddMemoryButton />

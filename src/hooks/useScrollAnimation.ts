@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseScrollAnimationOptions {
   threshold?: number;
@@ -42,17 +42,17 @@ export function useParallax(speed: number = 0.5) {
   const ref = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState(0);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!ref.current) return;
-      const rect = ref.current.getBoundingClientRect();
-      const scrolled = window.innerHeight - rect.top;
-      setOffset(scrolled * speed * 0.1);
-    };
+  const handleScroll = useCallback(() => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const scrolled = window.innerHeight - rect.top;
+    setOffset(scrolled * speed * 0.1);
+  }, [speed]);
 
+  useEffect(() => {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [speed]);
+  }, [handleScroll]);
 
   return { ref, offset };
 }

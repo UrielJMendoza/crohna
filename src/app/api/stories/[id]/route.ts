@@ -79,20 +79,34 @@ export async function PUT(
 
     const generated = await generateStory(eventSummaries, period, existing.title);
 
-    const updated = await prisma.aIStory.update({
-      where: { id },
-      data: {
-        title: generated.title,
-        summary: generated.summary,
-        highlights: generated.highlights,
-        period,
-        stats: {
-          events: events.length,
-          cities: locations.length,
-          photos: photosCount,
+    // Use a transaction to atomically verify ownership and update.
+    // The AI call above is external and long-running, so we re-check
+    // that the story still exists and belongs to this user before writing.
+    const updated = await prisma.$transaction(async (tx) => {
+      const fresh = await tx.aIStory.findFirst({
+        where: { id, userId: user.id },
+      });
+      if (!fresh) return null;
+
+      return tx.aIStory.update({
+        where: { id },
+        data: {
+          title: generated.title,
+          summary: generated.summary,
+          highlights: generated.highlights,
+          period,
+          stats: {
+            events: events.length,
+            cities: locations.length,
+            photos: photosCount,
+          },
         },
-      },
+      });
     });
+
+    if (!updated) {
+      return NextResponse.json({ error: "Story not found" }, { status: 404 });
+    }
 
     return NextResponse.json({
       story: {

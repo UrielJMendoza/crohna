@@ -115,6 +115,9 @@ export default function AddMemoryButton() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Add Memory"
               className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[calc(100%-2rem)] max-w-xl max-h-[90vh] bg-chrono-surface border border-[var(--border)] rounded-lg overflow-hidden flex flex-col"
             >
               <div className="flex items-center justify-between p-6 border-b border-[var(--line)]">
@@ -181,10 +184,12 @@ export default function AddMemoryButton() {
 
                 <div>
                   <label className="text-xs text-chrono-muted uppercase tracking-wider block mb-2">Category</label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Event category">
                     {CATEGORIES.map((cat) => (
                       <button
                         key={cat.value}
+                        role="radio"
+                        aria-checked={form.category === cat.value}
                         onClick={() => toggleField("category", cat.value)}
                         className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
                           form.category === cat.value
@@ -212,10 +217,14 @@ export default function AddMemoryButton() {
                 <div>
                   <label className="text-xs text-chrono-muted uppercase tracking-wider block mb-2">Photo Upload</label>
                   <div
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Upload photo — drag and drop or click to browse"
                     onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
                     className={`relative h-32 border-2 border-dashed transition-all cursor-pointer overflow-hidden rounded-lg ${
                       dragOver
                         ? "border-[var(--line-hover)] bg-[var(--muted)]"

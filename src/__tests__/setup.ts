@@ -76,6 +76,7 @@ export const mockPrisma = {
     delete: vi.fn(),
   },
   $queryRaw: vi.fn(),
+  $transaction: vi.fn((fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma)),
 };
 
 // Shared mock Supabase client

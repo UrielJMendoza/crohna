@@ -2,16 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 // Public API routes that don't require authentication
-const PUBLIC_API_ROUTES = new Set([
+const PUBLIC_API_ROUTES = [
   "/api/health",
   "/api/auth",
-]);
+];
 
 function isPublicApiRoute(pathname: string): boolean {
-  for (const route of PUBLIC_API_ROUTES) {
-    if (pathname === route || pathname.startsWith(route + "/")) return true;
-  }
-  return false;
+  return PUBLIC_API_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  );
 }
 
 /**

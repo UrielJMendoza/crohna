@@ -9,7 +9,13 @@ function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable is not set");
+    // Return a proxy that throws on actual usage, allowing build-time imports to succeed
+    return new Proxy({} as PrismaClient, {
+      get(_, prop) {
+        if (prop === "then" || typeof prop === "symbol") return undefined;
+        throw new Error("DATABASE_URL environment variable is not set");
+      },
+    });
   }
 
   const adapter = new PrismaNeon({ connectionString });

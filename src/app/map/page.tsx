@@ -4,7 +4,16 @@ import { Suspense } from "react";
 import { motion } from "framer-motion";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import EventMap from "@/components/map/EventMap";
+import dynamic from "next/dynamic";
+
+const EventMap = dynamic(() => import("@/components/map/EventMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[500px] flex items-center justify-center">
+      <div className="text-sm font-body font-light text-chrono-muted animate-pulse">Loading map...</div>
+    </div>
+  ),
+});
 import EmptyState from "@/components/ui/EmptyState";
 import { useEvents } from "@/hooks/useEvents";
 

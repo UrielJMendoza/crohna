@@ -28,6 +28,7 @@ export default function EventMap({ events }: EventMapProps) {
   const leafletMap = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const cleanupFnsRef = useRef<(() => void)[]>([]);
   const polylinesRef = useRef<L.Polyline[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -101,7 +102,9 @@ export default function EventMap({ events }: EventMapProps) {
     if (!mapLoaded || !leafletMap.current) return;
     const map = leafletMap.current;
 
-    // Clear existing markers and polylines
+    // Clean up previous listeners, markers, and polylines
+    cleanupFnsRef.current.forEach((fn) => fn());
+    cleanupFnsRef.current = [];
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
     polylinesRef.current.forEach((p) => p.remove());
@@ -174,13 +177,15 @@ export default function EventMap({ events }: EventMapProps) {
         el.setAttribute("tabindex", "0");
         el.setAttribute("role", "button");
         el.setAttribute("aria-label", `${event.title}${event.location ? `, ${event.location}` : ""}`);
-        el.addEventListener("keydown", (e: KeyboardEvent) => {
+        const keydownHandler = (e: KeyboardEvent) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             marker.openPopup();
             setSelectedEvent(event);
           }
-        });
+        };
+        el.addEventListener("keydown", keydownHandler);
+        cleanupFnsRef.current.push(() => el.removeEventListener("keydown", keydownHandler));
       }
 
       markersRef.current.push(marker);
@@ -207,6 +212,10 @@ export default function EventMap({ events }: EventMapProps) {
       const bounds = L.latLngBounds(latlngs);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
     }
+    return () => {
+      cleanupFnsRef.current.forEach((fn) => fn());
+      cleanupFnsRef.current = [];
+    };
   }, [mapLoaded, eventsWithCoords]);
 
   return (

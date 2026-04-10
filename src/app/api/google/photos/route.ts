@@ -100,12 +100,21 @@ export async function POST(req: NextRequest) {
 
     const capped = mediaItems.length >= MAX_PHOTOS;
 
-    // Deduplicate using gphotos:// URL and insert within a transaction
+    // Build candidate URLs for dedup before entering transaction
+    const candidateUrls: string[] = [];
+    for (const item of mediaItems) {
+      if (item.id) candidateUrls.push(`gphotos://${item.id}`);
+    }
+
+    // Deduplicate using batched WHERE IN query instead of loading all existing records
     const imported = await prisma.$transaction(async (tx) => {
-      const existingPhotoEvents = await tx.event.findMany({
-        where: { userId: user.id, source: "photos" },
-        select: { imageUrl: true },
-      });
+      // Only query for URLs that appear in the current import batch
+      const existingPhotoEvents = candidateUrls.length > 0
+        ? await tx.event.findMany({
+            where: { userId: user.id, source: "photos", imageUrl: { in: candidateUrls } },
+            select: { imageUrl: true },
+          })
+        : [];
 
       const existingUrls = new Set(
         existingPhotoEvents.map((e: { imageUrl: string | null }) => e.imageUrl).filter(Boolean)

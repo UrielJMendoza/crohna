@@ -82,12 +82,19 @@ export async function POST(req: NextRequest) {
 
     const capped = items.length >= MAX_ITEMS;
 
-    // Deduplicate using Google event ID and insert within a transaction
+    // Build candidate IDs for batched dedup query
+    const candidateIds = items
+      .map((item) => item.id)
+      .filter((id): id is string => !!id);
+
+    // Deduplicate using batched WHERE IN query instead of loading all existing records
     const imported = await prisma.$transaction(async (tx) => {
-      const existingCalendarEvents = await tx.event.findMany({
-        where: { userId: user.id, source: "calendar" },
-        select: { sourceId: true },
-      });
+      const existingCalendarEvents = candidateIds.length > 0
+        ? await tx.event.findMany({
+            where: { userId: user.id, source: "calendar", sourceId: { in: candidateIds } },
+            select: { sourceId: true },
+          })
+        : [];
 
       const existingSet = new Set(
         existingCalendarEvents

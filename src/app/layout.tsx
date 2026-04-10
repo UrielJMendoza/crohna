@@ -10,6 +10,7 @@ import ThemeProvider from "@/components/ui/ThemeProvider";
 import SessionProvider from "@/components/providers/SessionProvider";
 import AddMemoryButton from "@/components/ui/AddMemoryButton";
 import { ToasterProvider } from "@/components/providers/ToasterProvider";
+import SWRProvider from "@/components/providers/SWRProvider";
 import SessionErrorBanner from "@/components/ui/SessionErrorBanner";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -63,6 +64,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-chrono-bg text-chrono-text">
         <SessionProvider>
+          <SWRProvider>
           <ThemeProvider>
             <ErrorBoundary>
               <ScrollProgressBar />
@@ -76,6 +78,7 @@ export default function RootLayout({
             </ErrorBoundary>
             <ToasterProvider />
           </ThemeProvider>
+          </SWRProvider>
         </SessionProvider>
         <Analytics />
         <SpeedInsights />

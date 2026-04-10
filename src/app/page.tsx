@@ -40,16 +40,16 @@ function AnimatedWord() {
   }, []);
 
   return (
-    <span className="inline-block relative align-bottom text-right" style={{ lineHeight: "inherit", paddingRight: "0.08em", clipPath: "inset(-0.15em 0 -0.35em 0)" }}>
+    <span className="inline-block relative align-bottom text-right overflow-visible" style={{ lineHeight: "inherit", paddingRight: "0.08em" }}>
       {/* invisible sizer — holds natural width/height for longest word */}
       <span className="invisible italic" aria-hidden="true">beautifully</span>
       <AnimatePresence mode="wait">
         <motion.span
           key={HERO_WORDS[index]}
-          initial={{ y: "110%", opacity: 0 }}
-          animate={{ y: "0%", opacity: 1 }}
-          exit={{ y: "-110%", opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
           className="absolute inset-0 italic text-chrono-accent text-right"
           style={{ lineHeight: "inherit" }}
         >

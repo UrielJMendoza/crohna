@@ -40,7 +40,7 @@ function AnimatedWord() {
   }, []);
 
   return (
-    <span className="inline-block relative align-bottom text-right" style={{ lineHeight: "inherit", paddingRight: "0.08em", clipPath: "inset(-0.15em 0 -0.25em 0)" }}>
+    <span className="inline-block relative align-bottom text-right" style={{ lineHeight: "inherit", paddingRight: "0.08em", clipPath: "inset(-0.15em 0 -0.35em 0)" }}>
       {/* invisible sizer — holds natural width/height for longest word */}
       <span className="invisible italic" aria-hidden="true">beautifully</span>
       <AnimatePresence mode="wait">
@@ -130,10 +130,10 @@ function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
           className="font-display font-bold tracking-tight mb-10 text-chrono-text"
-          style={{ fontSize: "clamp(2.8rem, 7vw, 5.5rem)", lineHeight: 1.1 }}
+          style={{ fontSize: "clamp(2.8rem, 7vw, 5.5rem)", lineHeight: 1.15 }}
         >
           <span className="block">Your life,</span>
-          <span className="block">
+          <span className="block pb-1">
             <AnimatedWord /> mapped
           </span>
         </motion.h1>

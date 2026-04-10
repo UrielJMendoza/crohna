@@ -7,6 +7,7 @@ import { validateCsrf } from "@/lib/csrf";
 import { validateImageUrl } from "@/lib/url-validation";
 import { createEventSchema, parseBody } from "@/lib/validation";
 import { apiSuccess, apiError, apiPaginated } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 const checkEventLimit = createRateLimiter("events", 30, 60_000);
 
@@ -86,7 +87,7 @@ export async function GET(req: NextRequest) {
 
     return apiPaginated(events, "events", nextCursor);
   } catch (error) {
-    console.error("GET /api/events error:", error);
+    logger.error("GET /api/events error", { error: String(error) });
     return apiError("Failed to fetch events", 500);
   }
 }
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ event: formatEvent(event) }, 201);
   } catch (error) {
-    console.error("POST /api/events error:", error);
+    logger.error("POST /api/events error", { error: String(error) });
     return apiError("Failed to create event", 500);
   }
 }
@@ -177,7 +178,7 @@ export async function DELETE(req: NextRequest) {
 
     return apiSuccess({ deleted: result.count });
   } catch (error) {
-    console.error("DELETE /api/events error:", error);
+    logger.error("DELETE /api/events error", { error: String(error) });
     return apiError("Failed to delete events", 500);
   }
 }

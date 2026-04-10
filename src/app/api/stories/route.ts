@@ -7,6 +7,7 @@ import { createRateLimiter } from "@/lib/rate-limit";
 import { validateCsrf } from "@/lib/csrf";
 import { createStorySchema, parseBody } from "@/lib/validation";
 import { apiSuccess, apiError, apiPaginated } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 const checkStoryLimit = createRateLimiter("stories", 5, 60_000);
 
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
 
     return apiPaginated(stories, "stories", nextCursor);
   } catch (error) {
-    console.error("GET /api/stories error:", error);
+    logger.error("GET /api/stories error", { error: String(error) });
     return apiError("Failed to fetch stories", 500);
   }
 }
@@ -150,7 +151,7 @@ export async function POST(req: NextRequest) {
       },
     }, 201);
   } catch (error) {
-    console.error("POST /api/stories error:", error);
+    logger.error("POST /api/stories error", { error: String(error) });
     return apiError("Failed to create story", 500);
   }
 }

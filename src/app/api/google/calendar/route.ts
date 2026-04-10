@@ -6,6 +6,7 @@ import { getPrisma } from "@/lib/prisma";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { validateCsrf } from "@/lib/csrf";
 import { apiSuccess, apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 const checkImportLimit = createRateLimiter("google-import", 5, 60_000);
 
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
         if (calRes.status === 401 || calRes.status === 403) {
           return apiError("Google access expired. Please sign out and sign in again.", 401);
         }
-        console.error("Google Calendar API error:", errData);
+        logger.error("Google Calendar API error", { response: errData });
         return apiError("Failed to fetch calendar events", 500);
       }
 
@@ -156,7 +157,7 @@ export async function POST(req: NextRequest) {
       ...(capped && { warning: `Import capped at ${MAX_ITEMS} events. Some older events may not have been imported.` }),
     });
   } catch (error) {
-    console.error("POST /api/google/calendar error:", error);
+    logger.error("POST /api/google/calendar error", { error: String(error) });
     return apiError("Failed to import calendar events", 500);
   }
 }

@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { apiSuccess, apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 const checkInsightsLimit = createRateLimiter("insights", 20, 60_000);
 
@@ -107,7 +108,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("GET /api/insights error:", error);
+    logger.error("GET /api/insights error", { error: String(error) });
     return apiError("Failed to fetch insights", 500);
   }
 }

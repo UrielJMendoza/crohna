@@ -7,6 +7,7 @@ import { createRateLimiter } from "@/lib/rate-limit";
 import { generateStory } from "@/lib/story-generator";
 import { validateCsrf } from "@/lib/csrf";
 import { apiSuccess, apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 const checkStoryLimit = createRateLimiter("stories", 5, 60_000);
 
@@ -119,7 +120,7 @@ export async function PUT(
       },
     });
   } catch (error) {
-    console.error("PUT /api/stories/[id] error:", error);
+    logger.error("PUT /api/stories/[id] error", { error: String(error) });
     return apiError("Failed to regenerate story", 500);
   }
 }
@@ -159,7 +160,7 @@ export async function DELETE(
 
     return apiSuccess({});
   } catch (error) {
-    console.error("DELETE /api/stories/[id] error:", error);
+    logger.error("DELETE /api/stories/[id] error", { error: String(error) });
     return apiError("Failed to delete story", 500);
   }
 }

@@ -6,6 +6,7 @@ import { getPrisma } from "@/lib/prisma";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { validateCsrf } from "@/lib/csrf";
 import { apiSuccess, apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 const checkImportLimit = createRateLimiter("google-import", 5, 60_000);
 
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
         if (photosRes.status === 401 || photosRes.status === 403) {
           return apiError("Google access expired. Please sign out and sign in again.", 401);
         }
-        console.error("Google Photos API error:", errData);
+        logger.error("Google Photos API error", { response: errData });
         return apiError("Failed to fetch photos", 500);
       }
 
@@ -170,7 +171,7 @@ export async function POST(req: NextRequest) {
       ...(capped && { warning: `Import capped at ${MAX_PHOTOS} photos. Some older photos may not have been imported.` }),
     });
   } catch (error) {
-    console.error("POST /api/google/photos error:", error);
+    logger.error("POST /api/google/photos error", { error: String(error) });
     return apiError("Failed to import photos", 500);
   }
 }

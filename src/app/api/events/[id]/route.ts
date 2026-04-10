@@ -6,6 +6,7 @@ import { validateCsrf } from "@/lib/csrf";
 import { validateImageUrl } from "@/lib/url-validation";
 import { updateEventSchema, parseBody } from "@/lib/validation";
 import { apiSuccess, apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 // GET /api/events/[id] — get a single event
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       },
     });
   } catch (error) {
-    console.error("GET /api/events/[id] error:", error);
+    logger.error("GET /api/events/[id] error", { error: String(error) });
     return apiError("Failed to fetch event", 500);
   }
 }
@@ -122,7 +123,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       },
     });
   } catch (error) {
-    console.error("PUT /api/events/[id] error:", error);
+    logger.error("PUT /api/events/[id] error", { error: String(error) });
     return apiError("Failed to update event", 500);
   }
 }
@@ -158,7 +159,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return apiSuccess({});
   } catch (error) {
-    console.error("DELETE /api/events/[id] error:", error);
+    logger.error("DELETE /api/events/[id] error", { error: String(error) });
     return apiError("Failed to delete event", 500);
   }
 }

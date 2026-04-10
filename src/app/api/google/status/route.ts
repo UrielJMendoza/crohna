@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 // GET /api/google/status — check which Google services have imported data
 export async function GET() {
@@ -30,7 +31,7 @@ export async function GET() {
       photos: photosCount > 0,
     });
   } catch (error) {
-    console.error("GET /api/google/status error:", error);
+    logger.error("GET /api/google/status error", { error: String(error) });
     return apiError("Failed to check status", 500);
   }
 }

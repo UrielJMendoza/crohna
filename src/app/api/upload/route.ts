@@ -6,6 +6,7 @@ import { createRateLimiter } from "@/lib/rate-limit";
 import { validateCsrf } from "@/lib/csrf";
 import { getExtensionFromMime } from "@/lib/url-validation";
 import { apiSuccess, apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       });
 
     if (error) {
-      console.error("Supabase upload error:", error.message);
+      logger.error("Supabase upload error", { error: error.message });
       return apiError("Upload failed. Please try again.", 500);
     }
 

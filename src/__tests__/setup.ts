@@ -39,6 +39,11 @@ vi.mock("@/lib/auth", () => ({
 // Mock env (no-op)
 vi.mock("@/lib/env", () => ({}));
 
+// Mock logger (silent in tests)
+vi.mock("@/lib/logger", () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+
 // Mock story generator
 vi.mock("@/lib/story-generator", () => ({
   generateStory: vi.fn((_events: unknown[], _period: string, existingTitle?: string) =>

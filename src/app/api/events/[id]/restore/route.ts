@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { validateCsrf } from "@/lib/csrf";
 import { apiSuccess, apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 // POST /api/events/[id]/restore — restore a soft-deleted event
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return apiSuccess({ restored: true });
   } catch (error) {
-    console.error("POST /api/events/[id]/restore error:", error);
+    logger.error("POST /api/events/[id]/restore error", { error: String(error) });
     return apiError("Failed to restore event", 500);
   }
 }

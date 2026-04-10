@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/lib/auth";
 import { apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/google/photos/proxy?id=<mediaItemId>
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("GET /api/google/photos/proxy error:", error);
+    logger.error("GET /api/google/photos/proxy error", { error: String(error) });
     return apiError("Failed to proxy photo", 500);
   }
 }

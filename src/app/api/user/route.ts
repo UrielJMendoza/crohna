@@ -5,6 +5,7 @@ import { getPrisma } from "@/lib/prisma";
 import { validateCsrf } from "@/lib/csrf";
 import { updateUserSchema, deleteAccountSchema, parseBody } from "@/lib/validation";
 import { apiSuccess, apiError } from "@/lib/api-response";
+import { logger } from "@/lib/logger";
 
 // GET /api/user — get user profile and preferences
 export async function GET() {
@@ -33,7 +34,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("GET /api/user error:", error);
+    logger.error("GET /api/user error", { error: String(error) });
     return apiError("Failed to fetch user", 500);
   }
 }
@@ -73,7 +74,7 @@ export async function PUT(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("PUT /api/user error:", error);
+    logger.error("PUT /api/user error", { error: String(error) });
     return apiError("Failed to update profile", 500);
   }
 }
@@ -113,7 +114,7 @@ export async function DELETE(req: NextRequest) {
 
     return apiSuccess({});
   } catch (error) {
-    console.error("DELETE /api/user error:", error);
+    logger.error("DELETE /api/user error", { error: String(error) });
     return apiError("Failed to delete account", 500);
   }
 }

@@ -15,7 +15,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           <div className="md:col-span-2">
             <Link href="/" className="flex items-center mb-5">
-              <span className="text-[16px] font-body font-bold tracking-[-0.01em] text-chrono-text">
+              <span className="text-[18px] font-display italic text-chrono-text" style={{ fontWeight: 600 }}>
                 Crohna
               </span>
             </Link>

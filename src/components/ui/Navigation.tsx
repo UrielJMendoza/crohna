@@ -289,7 +289,7 @@ export default function Navigation() {
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <span className="text-[18px] font-body font-bold tracking-[-0.01em] text-chrono-text">
+            <span className="text-[20px] font-display italic text-chrono-text" style={{ fontWeight: 600 }}>
               Crohna
             </span>
           </Link>

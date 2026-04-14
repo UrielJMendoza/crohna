@@ -26,7 +26,8 @@ export default function LoadingScreen() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="text-[22px] font-body font-bold tracking-[-0.01em] text-chrono-text"
+            className="text-[26px] font-display italic text-chrono-text"
+            style={{ fontWeight: 600 }}
           >
             Crohna
           </motion.div>

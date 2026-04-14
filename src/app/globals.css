@@ -197,6 +197,36 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   animation: marqueeRight 35s linear infinite;
 }
 
+/* Dot grid pattern */
+.dot-grid {
+  background-image: radial-gradient(circle, var(--line) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Animated gradient line */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--chrono-accent), transparent);
+  background-size: 200% 100%;
+  animation: gradientShift 4s ease-in-out infinite;
+}
+
+/* Glow pulse for accent elements */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(61, 90, 68, 0.1); }
+  50% { box-shadow: 0 0 40px rgba(61, 90, 68, 0.2); }
+}
+
+.glow-pulse {
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
 /* Selection color */
 ::selection {
   background: rgba(61, 90, 68, 0.18);

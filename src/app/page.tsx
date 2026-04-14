@@ -18,14 +18,40 @@ import { useStories } from "@/hooks/useStories";
 function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ delay, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ delay, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
       className={className}
     >
       {children}
     </motion.div>
+  );
+}
+
+function SectionReveal({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "start 0.3"],
+  });
+  const opacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const scale = useTransform(scrollYProgress, [0, 1], [0.95, 1]);
+  const y = useTransform(scrollYProgress, [0, 1], [60, 0]);
+
+  return (
+    <motion.div ref={ref} style={{ opacity, scale, y }} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+function AnimatedDivider() {
+  return (
+    <div className="relative py-8 flex items-center justify-center">
+      <div className="animated-gradient-line w-full max-w-md" />
+      <div className="absolute left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-chrono-accent/30 glow-pulse" />
+    </div>
   );
 }
 
@@ -107,6 +133,28 @@ function HeroSection() {
       <ParticleField />
       <GradientBlob color="sage" size="lg" className="-top-40 -right-40 opacity-50" />
       <GradientBlob color="lavender" size="md" className="bottom-20 -left-40 opacity-30" />
+
+      {/* Decorative floating rings */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+        className="absolute top-[15%] right-[10%] w-32 h-32 md:w-48 md:h-48 rounded-full border border-chrono-accent/[0.08] pointer-events-none"
+      />
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+        className="absolute bottom-[25%] left-[8%] w-24 h-24 md:w-36 md:h-36 rounded-full border border-chrono-accent/[0.06] pointer-events-none"
+      />
+      <motion.div
+        animate={{ y: [0, -12, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[30%] left-[15%] w-2 h-2 rounded-full bg-chrono-accent/20 pointer-events-none"
+      />
+      <motion.div
+        animate={{ y: [0, 10, 0] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute top-[20%] right-[20%] w-1.5 h-1.5 rounded-full bg-chrono-accent/15 pointer-events-none"
+      />
 
       <motion.div
         style={{ y, scale }}
@@ -328,8 +376,8 @@ function ShowcaseSection() {
           <div className="relative mb-16 rounded-2xl overflow-hidden border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
             <div className="relative h-64 md:h-96 overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&q=80&auto=format"
-                alt="Product showcase"
+                src="https://images.unsplash.com/photo-1464746133101-a2c3f88e0dd9?w=1200&q=80&auto=format"
+                alt="Life moments captured"
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 960px"
@@ -588,30 +636,31 @@ function FeaturesSection() {
       number: "01",
       title: "Timeline",
       description: "Every moment organized chronologically. A living record of the events that shaped your story.",
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80&auto=format",
+      image: "https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=600&q=80&auto=format",
     },
     {
       number: "02",
       title: "Stories",
       description: "Beautiful, emotional summaries of your life chapters. Narratives crafted from your real experiences.",
-      image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80&auto=format",
+      image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&q=80&auto=format",
     },
     {
       number: "03",
       title: "Places",
       description: "See where your life happened on an animated map with pins for every memory.",
-      image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&q=80&auto=format",
+      image: "https://images.unsplash.com/photo-1500835556837-99ac94a94552?w=600&q=80&auto=format",
     },
     {
       number: "04",
       title: "Insights",
       description: "Discover patterns in your life — most active years, favorite cities, biggest milestones.",
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80&auto=format",
+      image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=600&q=80&auto=format",
     },
   ];
 
   return (
     <section className="relative py-[80px] md:py-[160px] px-6 overflow-hidden bg-chrono-surface/50">
+      <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none" />
       <GradientBlob color="lavender" size="lg" className="-right-80 top-40 opacity-20" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--line)] to-transparent" />
 
@@ -877,17 +926,17 @@ function UseCasesSection() {
     {
       persona: "The Designer",
       scenario: "Turning three years of scattered photos and memories into a cohesive, visual timeline of creative milestones.",
-      image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&q=80&auto=format",
+      image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&q=80&auto=format",
     },
     {
       persona: "The Engineer",
       scenario: "Mapping career growth, side projects, and conference talks into a year-in-review that reveals just how much was accomplished.",
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&q=80&auto=format",
+      image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&q=80&auto=format",
     },
     {
       persona: "The Student",
       scenario: "Building a college timeline to share with family — every semester, study abroad trip, and graduation milestone in one place.",
-      image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=400&q=80&auto=format",
+      image: "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=400&q=80&auto=format",
     },
   ];
 
@@ -959,6 +1008,23 @@ function CTASection() {
     <section className="relative py-[100px] md:py-[200px] px-6 overflow-hidden bg-[#1A2B1F] text-white">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent pointer-events-none" />
+
+      {/* Floating accent dots */}
+      <motion.div
+        animate={{ y: [0, -15, 0], opacity: [0.15, 0.3, 0.15] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[20%] left-[15%] w-3 h-3 rounded-full bg-emerald-400/20 blur-sm pointer-events-none"
+      />
+      <motion.div
+        animate={{ y: [0, 12, 0], opacity: [0.1, 0.25, 0.1] }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute bottom-[30%] right-[12%] w-4 h-4 rounded-full bg-emerald-400/15 blur-sm pointer-events-none"
+      />
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+        className="absolute top-[10%] right-[20%] w-40 h-40 rounded-full border border-emerald-500/[0.06] pointer-events-none"
+      />
 
       <FadeUp className="relative max-w-3xl mx-auto text-center">
         <h2
@@ -1033,11 +1099,11 @@ function PullQuoteSection() {
 
 function PhotoMosaic() {
   const photos = [
-    { src: "https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=600&q=80&auto=format", alt: "Mountain landscape" },
-    { src: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80&auto=format", alt: "Sunlit valley" },
-    { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80&auto=format", alt: "Portrait" },
-    { src: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=600&q=80&auto=format", alt: "Road trip" },
-    { src: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80&auto=format", alt: "Lake view" },
+    { src: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&q=80&auto=format", alt: "Friends laughing together", label: "Friendships" },
+    { src: "https://images.unsplash.com/photo-1502791451862-7bd8c1df2b6f?w=600&q=80&auto=format", alt: "Golden hour sunset", label: "Sunsets" },
+    { src: "https://images.unsplash.com/photo-1473580044384-7ba9967e16a0?w=400&q=80&auto=format", alt: "Holding photographs", label: "Memories" },
+    { src: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?w=600&q=80&auto=format", alt: "Travel adventure", label: "Adventures" },
+    { src: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=600&q=80&auto=format", alt: "Together", label: "Milestones" },
   ];
 
   return (
@@ -1063,7 +1129,7 @@ function PhotoMosaic() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 right-4">
-                <span className="text-white/80 text-xs font-body font-medium tracking-wider uppercase">2024 · Travel</span>
+                <span className="text-white/80 text-xs font-body font-semibold tracking-wider uppercase">{photos[0].label}</span>
               </div>
             </div>
           </FadeUp>
@@ -1078,7 +1144,10 @@ function PhotoMosaic() {
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                  <span className="text-white/90 text-[10px] font-body font-semibold tracking-wider uppercase">{photo.label}</span>
+                </div>
               </div>
             </FadeUp>
           ))}
@@ -1097,19 +1166,53 @@ export default function Home() {
       <LoadingScreen />
 
       <HeroSection />
-      <PullQuoteSection />
-      <PhotoMosaic />
+
+      <SectionReveal>
+        <PullQuoteSection />
+      </SectionReveal>
+
+      <SectionReveal>
+        <PhotoMosaic />
+      </SectionReveal>
+
+      <AnimatedDivider />
       <OnThisDayWidget events={userEvents} />
+
       <HowItWorksSection />
       <MarqueeTicker />
-      <FeaturesSection />
+
+      <SectionReveal>
+        <FeaturesSection />
+      </SectionReveal>
+
       <ShowcaseSection />
-      <PlayYourStorySection events={userEvents} />
-      <TimelinePreview events={userEvents} />
+
+      <SectionReveal>
+        <PlayYourStorySection events={userEvents} />
+      </SectionReveal>
+
+      <AnimatedDivider />
+
+      <SectionReveal>
+        <TimelinePreview events={userEvents} />
+      </SectionReveal>
+
       <MarqueeTicker />
-      <MapPreview events={userEvents} />
-      <StoriesPreview stories={userStories} />
-      <UseCasesSection />
+
+      <SectionReveal>
+        <MapPreview events={userEvents} />
+      </SectionReveal>
+
+      <AnimatedDivider />
+
+      <SectionReveal>
+        <StoriesPreview stories={userStories} />
+      </SectionReveal>
+
+      <SectionReveal>
+        <UseCasesSection />
+      </SectionReveal>
+
       <CTASection />
     </>
   );

@@ -315,7 +315,6 @@ function TechnologySection() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const titleOpacity = Math.max(0, 1 - (scrollProgress / 0.2));
   const imageProgress = Math.max(0, Math.min(1, (scrollProgress - 0.2) / 0.8));
   const centerWidth = 100 - (imageProgress * 58);
   const sideWidth = imageProgress * 22;

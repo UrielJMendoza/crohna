@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  /* Wispr Flow inspired — light, editorial, quiet luxury */
+  /* Personal journal — warm earth tones, leather & cream */
   --chrono-bg: #FAF8F5;
   --chrono-surface: #F0EDE8;
   --chrono-card: #FFFFFF;
-  --chrono-accent: #3D5A44;
-  --chrono-glow: rgba(61, 90, 68, 0.10);
+  --chrono-accent: #5C4033;
+  --chrono-glow: rgba(92, 64, 51, 0.10);
   --chrono-text: #111111;
   --chrono-muted: rgba(17, 17, 17, 0.55);
 
@@ -30,27 +30,16 @@
 }
 
 html.light {
-  --chrono-bg: #FAF8F5;
-  --chrono-surface: #F0EDE8;
-  --chrono-card: #FFFFFF;
-  --chrono-accent: #3D5A44;
-  --chrono-glow: rgba(61, 90, 68, 0.10);
-  --chrono-text: #111111;
-  --chrono-muted: rgba(17, 17, 17, 0.55);
-
-  --line: rgba(17, 17, 17, 0.10);
-  --line-strong: rgba(17, 17, 17, 0.15);
-  --line-hover: rgba(17, 17, 17, 0.28);
-  --card-bg: #FFFFFF;
-  --input-bg: #F0EDE8;
+  --chrono-accent: #5C4033;
+  --chrono-glow: rgba(92, 64, 51, 0.10);
 }
 
 html.dark {
   --chrono-bg: #0E0E0E;
   --chrono-surface: #161616;
   --chrono-card: #1C1C1C;
-  --chrono-accent: #8FB996;
-  --chrono-glow: rgba(143, 185, 150, 0.08);
+  --chrono-accent: #C4956A;
+  --chrono-glow: rgba(196, 149, 106, 0.08);
   --chrono-text: #F0EDE8;
   --chrono-muted: rgba(240, 237, 232, 0.45);
 
@@ -201,12 +190,12 @@ body {
 
 /* Selection color */
 ::selection {
-  background: rgba(61, 90, 68, 0.18);
+  background: rgba(92, 64, 51, 0.18);
   color: var(--chrono-text);
 }
 
 html.dark ::selection {
-  background: rgba(143, 185, 150, 0.2);
+  background: rgba(196, 149, 106, 0.2);
   color: var(--chrono-text);
 }
 
@@ -215,7 +204,7 @@ html.dark ::selection {
   :root {
     --background: 37 33% 97%;
     --foreground: 0 0% 10%;
-    --primary: 140 18% 35%;
+    --primary: 18 30% 34%;
     --muted: 37 20% 94%;
     --border: 0 0% 10%;
   }
@@ -223,7 +212,7 @@ html.dark ::selection {
   html.dark {
     --background: 0 0% 5.5%;
     --foreground: 37 14% 93%;
-    --primary: 140 22% 64%;
+    --primary: 28 35% 60%;
     --muted: 0 0% 10%;
     --border: 0 0% 100%;
   }

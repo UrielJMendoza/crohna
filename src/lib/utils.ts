@@ -28,7 +28,7 @@ export function getCategoryColor(category?: string): string {
     case "career":
       return "rgba(251, 191, 36, 0.8)";  // amber
     case "achievement":
-      return "rgba(52, 211, 153, 0.8)";  // emerald
+      return "rgba(196, 149, 106, 0.8)";  // warm brown
     case "education":
       return "rgba(167, 139, 250, 0.8)";  // violet
     case "life":

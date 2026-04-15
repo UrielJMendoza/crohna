@@ -26,7 +26,7 @@ export default function OGImage() {
             width: 64,
             height: 64,
             borderRadius: 16,
-            backgroundColor: "#3D5A44",
+            backgroundColor: "#5C4033",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -78,7 +78,7 @@ export default function OGImage() {
         >
           <span>Your life,</span>
           <span>
-            <span style={{ fontStyle: "italic", color: "#3D5A44" }}>beautifully</span>{" "}
+            <span style={{ fontStyle: "italic", color: "#5C4033" }}>beautifully</span>{" "}
             <span style={{ fontWeight: 700 }}>mapped</span>
           </span>
         </div>
@@ -104,7 +104,7 @@ export default function OGImage() {
             left: 0,
             right: 0,
             height: 6,
-            backgroundColor: "#3D5A44",
+            backgroundColor: "#5C4033",
           }}
         />
       </div>

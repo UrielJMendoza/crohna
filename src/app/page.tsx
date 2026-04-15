@@ -9,24 +9,24 @@ import { Clock, MapPin, BookOpen, BarChart3, Layers, Shield, Zap, Camera, Calend
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import { ScrollRevealText } from "@/components/ui/ScrollRevealText";
 
-const HERO_CENTER_IMAGE = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2000";
+const HERO_CENTER_IMAGE = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=2000";
 
 const HERO_SIDE_IMAGES = [
-  { src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000", alt: "Portrait moment", position: "left" },
-  { src: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=1000", alt: "Celebration", position: "left" },
-  { src: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=1000", alt: "City lights", position: "right" },
-  { src: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1000", alt: "Friends together", position: "right" },
+  { src: "https://images.unsplash.com/photo-1517971071642-34a2d3ecc9cd?q=80&w=1000", alt: "Writing in journal", position: "left" },
+  { src: "https://images.unsplash.com/photo-1495364141860-b0d03eccd065?q=80&w=1000", alt: "Coffee and photographs", position: "left" },
+  { src: "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?q=80&w=1000", alt: "Vintage film camera", position: "right" },
+  { src: "https://images.unsplash.com/photo-1516410529446-2c777cb7366d?q=80&w=1000", alt: "Sunset silhouette", position: "right" },
 ];
 
 const GALLERY_IMAGES = [
-  "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&q=80",
-  "https://images.unsplash.com/photo-1449034446853-66c86144b0ad?w=800&q=80",
-  "https://images.unsplash.com/photo-1551524559-8af4e6624178?w=800&q=80",
-  "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80",
-  "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?w=800&q=80",
-  "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80",
-  "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&q=80",
-  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=80",
+  "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=800&q=80",
+  "https://images.unsplash.com/photo-1504700610630-ac6aba3536d3?w=800&q=80",
+  "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&q=80",
+  "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&q=80",
+  "https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=800&q=80",
+  "https://images.unsplash.com/photo-1502920514313-52581002a659?w=800&q=80",
+  "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=800&q=80",
+  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80",
 ];
 
 function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
@@ -322,8 +322,8 @@ function MomentsSection() {
                 }}
               >
                 <Image
-                  src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80"
-                  alt="A cozy home moment"
+                  src="https://images.unsplash.com/photo-1531685250784-7569952593d2?w=800&q=80"
+                  alt="Polaroid photos on warm wood"
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -331,7 +331,7 @@ function MomentsSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6">
                   <span className="backdrop-blur-md px-4 py-2 text-sm font-body font-medium rounded-full bg-[rgba(255,255,255,0.2)] text-white">
-                    First Apartment — 2019
+                    Summer Memories — 2019
                   </span>
                 </div>
               </div>
@@ -349,8 +349,8 @@ function MomentsSection() {
                 }}
               >
                 <Image
-                  src="https://images.unsplash.com/photo-1523050854058-8df90110c476?w=800&q=80"
-                  alt="Adventure travel"
+                  src="https://images.unsplash.com/photo-1476611338391-6f395a0ebc7b?w=800&q=80"
+                  alt="Walking through golden wheat field"
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -388,10 +388,10 @@ function FeaturesSection() {
   const xRight = useTransform(scrollYProgress, [0, 1], [30, 0]);
 
   const features = [
-    { icon: Clock, title: "Timeline", desc: "Every moment organized chronologically — a living record that grows with you.", photo: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", gradient: "from-emerald-600 to-teal-700" },
-    { icon: BookOpen, title: "Life Stories", desc: "Narratives crafted from your real experiences. Your story, told beautifully.", photo: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&q=80", gradient: "from-violet-600 to-purple-700" },
-    { icon: MapPin, title: "Life Map", desc: "See where your life happened — every pin is a memory on an interactive globe.", photo: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80", gradient: "from-amber-600 to-orange-700" },
-    { icon: BarChart3, title: "Insights", desc: "Discover patterns you never saw — most active years, favorite places, milestones.", photo: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80", gradient: "from-blue-600 to-indigo-700" },
+    { icon: Clock, title: "Timeline", desc: "Every moment organized chronologically — a living record that grows with you.", photo: "https://images.unsplash.com/photo-1517842645767-c639042777db?w=600&q=80", gradient: "from-amber-700 to-amber-900" },
+    { icon: BookOpen, title: "Life Stories", desc: "Narratives crafted from your real experiences. Your story, told beautifully.", photo: "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&q=80", gradient: "from-stone-600 to-stone-800" },
+    { icon: MapPin, title: "Life Map", desc: "See where your life happened — every pin is a memory on an interactive globe.", photo: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=600&q=80", gradient: "from-orange-700 to-orange-900" },
+    { icon: BarChart3, title: "Insights", desc: "Discover patterns you never saw — most active years, favorite places, milestones.", photo: "https://images.unsplash.com/photo-1501139083538-0139583c060f?w=600&q=80", gradient: "from-yellow-700 to-amber-800" },
   ];
 
   return (
@@ -451,22 +451,22 @@ function HowItWorksSection() {
     { icon: BookOpen, num: "03", title: "Discover your narrative", desc: "Personal narratives crafted from your life chapters — your story, told right." },
   ];
   return (
-    <section ref={ref} className="relative py-24 md:py-44 px-6 overflow-hidden bg-[#1A2B1F] text-white">
-      <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-emerald-900/30 to-transparent blur-3xl pointer-events-none" />
+    <section ref={ref} className="relative py-24 md:py-44 px-6 overflow-hidden bg-[#2C1810] text-white">
+      <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-amber-900/30 to-transparent blur-3xl pointer-events-none" />
       <div className="relative max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
         <div>
           <FadeUp>
-            <span className="text-[13px] tracking-[0.12em] uppercase text-emerald-400/80 font-body font-medium mb-5 block">How It Works</span>
-            <h2 className="text-4xl md:text-5xl font-display tracking-tight text-white mb-12" style={{ fontWeight: 600 }}>Three steps to your <em className="text-emerald-300">life story</em></h2>
+            <span className="text-[13px] tracking-[0.12em] uppercase text-[#C4956A]/80 font-body font-medium mb-5 block">How It Works</span>
+            <h2 className="text-4xl md:text-5xl font-display tracking-tight text-white mb-12" style={{ fontWeight: 600 }}>Three steps to your <em className="text-amber-200">life story</em></h2>
           </FadeUp>
           {steps.map((s, i) => (
             <SlideIn key={s.num} delay={i * 0.15} from="left">
               <div className="flex gap-5 mb-10 group">
-                <motion.div whileHover={{ scale: 1.1, rotate: -5 }} className="w-14 h-14 rounded-2xl bg-emerald-400/15 border border-emerald-400/25 flex items-center justify-center shrink-0 transition-colors group-hover:bg-emerald-400/25">
-                  <s.icon size={22} strokeWidth={1.8} className="text-emerald-300" />
+                <motion.div whileHover={{ scale: 1.1, rotate: -5 }} className="w-14 h-14 rounded-2xl bg-amber-400/15 border border-amber-400/25 flex items-center justify-center shrink-0 transition-colors group-hover:bg-amber-400/25">
+                  <s.icon size={22} strokeWidth={1.8} className="text-amber-200" />
                 </motion.div>
                 <div>
-                  <span className="text-[11px] font-body font-bold text-emerald-400/50 tracking-widest uppercase">Step {s.num}</span>
+                  <span className="text-[11px] font-body font-bold text-amber-300/50 tracking-widest uppercase">Step {s.num}</span>
                   <h3 className="text-xl font-display text-white mt-1 mb-1.5" style={{ fontWeight: 500 }}>{s.title}</h3>
                   <p className="text-sm font-body text-white/55 leading-relaxed">{s.desc}</p>
                 </div>
@@ -477,11 +477,11 @@ function HowItWorksSection() {
         <motion.div style={{ y: imgY }} className="relative hidden md:block">
           <div className="grid grid-cols-2 gap-4">
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl">
-              <Image src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&q=80" alt="College memory" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+              <Image src="https://images.unsplash.com/photo-1609220136736-443140cffec6?w=800&q=80" alt="Hands holding a film photograph" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             </div>
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl mt-12">
-              <Image src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=800&q=80" alt="Team celebration" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
+              <Image src="https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=800&q=80" alt="Open scrapbook with memories" fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             </div>
           </div>
@@ -663,16 +663,16 @@ function CTASection() {
   };
 
   return (
-    <section ref={ref} className="relative py-24 md:py-48 px-6 overflow-hidden bg-[#1A2B1F] text-white">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
+    <section ref={ref} className="relative py-24 md:py-48 px-6 overflow-hidden bg-[#2C1810] text-white">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
       <motion.div style={{ scale }} className="relative max-w-3xl mx-auto text-center">
         <FadeUp>
           <h2 className="font-display tracking-tight mb-8 text-white" style={{ fontSize: "clamp(2.5rem, 8vw, 6rem)", lineHeight: 1.05, fontWeight: 600 }}>
-            Ready to map<br /><em className="text-emerald-300">your story?</em>
+            Ready to map<br /><em className="text-amber-200">your story?</em>
           </h2>
           <p className="text-lg font-body max-w-md mx-auto mb-14 leading-relaxed text-white/55">Transform your memories into a beautiful, interactive timeline.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} onClick={handleCTA} className="group inline-flex cursor-pointer items-center gap-2.5 rounded-xl px-10 py-4 text-base font-body font-bold bg-emerald-400 text-[#1A2B1F] hover:bg-emerald-300 shadow-[0_4px_24px_rgba(110,231,183,0.3)] transition-colors">
+            <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }} onClick={handleCTA} className="group inline-flex cursor-pointer items-center gap-2.5 rounded-xl px-10 py-4 text-base font-body font-bold bg-[#5C4033] text-white hover:bg-[#6B4D3E] shadow-[0_4px_24px_rgba(92,64,51,0.3)] transition-colors">
               <Play size={15} fill="currentColor" /> Get Started <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
             </motion.button>
             <Link href="/insights" className="px-10 py-4 text-white/70 hover:text-white border border-white/15 hover:border-white/30 rounded-xl transition-all text-sm font-body font-medium">See a Demo</Link>

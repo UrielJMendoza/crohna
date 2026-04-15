@@ -10,15 +10,15 @@ interface GradientBlobProps {
 }
 
 const colorMap = {
-  green: "from-emerald-200/30 via-green-100/20 to-teal-200/10",
-  sage: "from-green-200/25 via-emerald-100/15 to-lime-200/10",
+  green: "from-amber-200/30 via-orange-100/20 to-yellow-200/10",
+  sage: "from-stone-200/25 via-amber-100/15 to-orange-200/10",
   lavender: "from-purple-200/20 via-violet-100/15 to-indigo-200/10",
   warm: "from-amber-200/20 via-orange-100/15 to-yellow-200/10",
 };
 
 const darkColorMap = {
-  green: "dark:from-emerald-800/15 dark:via-green-900/10 dark:to-teal-900/5",
-  sage: "dark:from-green-800/12 dark:via-emerald-900/8 dark:to-lime-900/5",
+  green: "dark:from-amber-800/15 dark:via-orange-900/10 dark:to-yellow-900/5",
+  sage: "dark:from-stone-800/12 dark:via-amber-900/8 dark:to-orange-900/5",
   lavender: "dark:from-purple-800/12 dark:via-violet-900/8 dark:to-indigo-900/5",
   warm: "dark:from-amber-800/12 dark:via-orange-900/8 dark:to-yellow-900/5",
 };

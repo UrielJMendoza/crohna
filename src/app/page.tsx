@@ -122,71 +122,100 @@ function HeroSection() {
 function PhotoParallaxSection() {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const y1 = useTransform(scrollYProgress, [0, 1], [100, -100]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [60, -120]);
-  const y3 = useTransform(scrollYProgress, [0, 1], [120, -60]);
-  const rotate1 = useTransform(scrollYProgress, [0, 1], [-1, 1]);
-  const rotate2 = useTransform(scrollYProgress, [0, 1], [1, -1]);
+  const y1 = useTransform(scrollYProgress, [0, 1], [40, -40]);
+  const y2 = useTransform(scrollYProgress, [0, 1], [80, -30]);
 
   return (
-    <section ref={ref} className="relative py-20 md:py-32 px-6 overflow-hidden bg-chrono-surface/50">
+    <section ref={ref} className="relative py-20 md:py-32 px-6 overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--line)] to-transparent" />
       <FadeUp className="text-center mb-16 max-w-3xl mx-auto">
-        <span className="section-label mb-4 block">Your Memories</span>
-        <h2 className="text-4xl md:text-6xl font-display tracking-tight text-chrono-text">
+        <h2 className="text-4xl md:text-6xl font-display tracking-tight text-chrono-text" style={{ fontWeight: 600 }}>
           <span className="italic text-chrono-accent">Every moment</span> deserves<br />a beautiful canvas
         </h2>
-        <p className="text-base md:text-lg font-body text-chrono-text/50 mt-6 max-w-xl mx-auto leading-relaxed">
-          Crohna lets you capture, organize, and relive at the speed of thought — turning scattered moments into a cohesive life story.
+        <p className="text-base md:text-lg font-body text-chrono-text/55 mt-6 max-w-xl mx-auto leading-relaxed">
+          Capture, organize, and relive — turning scattered moments into a cohesive life story.
         </p>
       </FadeUp>
-      <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-        {PHOTOS.map((photo, i) => {
-          const yVal = i % 3 === 0 ? y1 : i % 3 === 1 ? y2 : y3;
-          const rotateVal = i % 2 === 0 ? rotate1 : rotate2;
-          return (
-            <motion.div
-              key={photo.alt}
-              style={{ y: yVal, rotate: rotateVal }}
-              whileHover={{ scale: 1.04, zIndex: 10 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              className={`relative rounded-2xl overflow-hidden shadow-lg cursor-pointer ${i === 0 ? "row-span-2 aspect-[3/4]" : "aspect-[4/3]"}`}
-            >
-              <Image src={photo.src} alt={photo.alt} fill className="object-cover transition-transform duration-700 hover:scale-110" sizes="(max-width: 768px) 50vw, 33vw" unoptimized />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-              <span className="absolute bottom-3 left-3 text-white text-[11px] font-body font-semibold tracking-wide uppercase bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">{photo.alt}</span>
-            </motion.div>
-          );
-        })}
+      {/* Bento grid — organized, intentional layout */}
+      <div className="max-w-6xl mx-auto grid grid-cols-4 md:grid-cols-12 gap-3 md:gap-4 auto-rows-[160px] md:auto-rows-[200px]">
+        <motion.div style={{ y: y1 }} whileHover={{ scale: 1.03 }} className="relative col-span-2 md:col-span-5 row-span-2 rounded-2xl overflow-hidden shadow-xl cursor-pointer group">
+          <Image src={PHOTOS[0].src} alt={PHOTOS[0].alt} fill className="object-cover transition-transform duration-700 group-hover:scale-105" sizes="40vw" unoptimized />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <span className="absolute bottom-4 left-4 text-white text-sm font-display font-semibold">{PHOTOS[0].alt}</span>
+        </motion.div>
+        <motion.div style={{ y: y2 }} whileHover={{ scale: 1.03 }} className="relative col-span-2 md:col-span-4 row-span-1 rounded-2xl overflow-hidden shadow-xl cursor-pointer group">
+          <Image src={PHOTOS[1].src} alt={PHOTOS[1].alt} fill className="object-cover transition-transform duration-700 group-hover:scale-105" sizes="33vw" unoptimized />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <span className="absolute bottom-4 left-4 text-white text-sm font-display font-semibold">{PHOTOS[1].alt}</span>
+        </motion.div>
+        <motion.div style={{ y: y1 }} whileHover={{ scale: 1.03 }} className="relative col-span-2 md:col-span-3 row-span-2 rounded-2xl overflow-hidden shadow-xl cursor-pointer group">
+          <Image src={PHOTOS[2].src} alt={PHOTOS[2].alt} fill className="object-cover transition-transform duration-700 group-hover:scale-105" sizes="25vw" unoptimized />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <span className="absolute bottom-4 left-4 text-white text-sm font-display font-semibold">{PHOTOS[2].alt}</span>
+        </motion.div>
+        <motion.div style={{ y: y2 }} whileHover={{ scale: 1.03 }} className="relative col-span-2 md:col-span-4 row-span-1 rounded-2xl overflow-hidden shadow-xl cursor-pointer group">
+          <Image src={PHOTOS[3].src} alt={PHOTOS[3].alt} fill className="object-cover transition-transform duration-700 group-hover:scale-105" sizes="33vw" unoptimized />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <span className="absolute bottom-4 left-4 text-white text-sm font-display font-semibold">{PHOTOS[3].alt}</span>
+        </motion.div>
       </div>
     </section>
   );
 }
 
 function FeaturesSection() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const xLeft = useTransform(scrollYProgress, [0, 1], [-30, 0]);
+  const xRight = useTransform(scrollYProgress, [0, 1], [30, 0]);
+
   const features = [
-    { icon: Clock, title: "Timeline", desc: "Every moment organized chronologically. A living record of the events that shaped your story.", accent: "bg-emerald-500/15 text-emerald-700" },
-    { icon: BookOpen, title: "Life Stories", desc: "Beautiful narratives of your life chapters — real stories crafted from your real experiences.", accent: "bg-violet-500/15 text-violet-700" },
-    { icon: MapPin, title: "Life Map", desc: "See where your life happened on an interactive map with pins for every memory.", accent: "bg-amber-500/15 text-amber-700" },
-    { icon: BarChart3, title: "Insights", desc: "Discover patterns — most active years, favorite cities, biggest milestones.", accent: "bg-blue-500/15 text-blue-700" },
+    { icon: Clock, title: "Timeline", desc: "Every moment organized chronologically — a living record that grows with you.", photo: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80", gradient: "from-emerald-600 to-teal-700" },
+    { icon: BookOpen, title: "Life Stories", desc: "Narratives crafted from your real experiences. Your story, told beautifully.", photo: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&q=80", gradient: "from-violet-600 to-purple-700" },
+    { icon: MapPin, title: "Life Map", desc: "See where your life happened — every pin is a memory on an interactive globe.", photo: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80", gradient: "from-amber-600 to-orange-700" },
+    { icon: BarChart3, title: "Insights", desc: "Discover patterns you never saw — most active years, favorite places, milestones.", photo: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80", gradient: "from-blue-600 to-indigo-700" },
   ];
+
   return (
-    <section className="relative py-20 md:py-36 px-6 overflow-hidden">
-      <div className="max-w-5xl mx-auto">
-        <FadeUp className="text-center mb-16">
-          <span className="section-label mb-5 block">Features</span>
-          <h2 className="text-4xl md:text-6xl font-display tracking-tight text-chrono-text" style={{ fontWeight: 600 }}>Everything you need to <em>relive your story</em></h2>
+    <section ref={ref} className="relative py-24 md:py-40 px-6 overflow-hidden bg-chrono-surface/30">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--line)] to-transparent" />
+      <div className="max-w-6xl mx-auto">
+        <FadeUp className="text-center mb-20">
+          <h2 className="text-4xl md:text-6xl font-display tracking-tight text-chrono-text" style={{ fontWeight: 700 }}>
+            Everything you need
+          </h2>
         </FadeUp>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {features.map((f, i) => (
-            <FadeUp key={f.title} delay={i * 0.1}>
-              <motion.div whileHover={{ y: -6, scale: 1.02 }} transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }} className="group bg-[var(--card-bg)] rounded-2xl border border-[var(--line)] hover:border-chrono-accent/40 hover:shadow-[0_12px_40px_rgba(61,90,68,0.12)] transition-all duration-500 p-8 md:p-10 h-full">
-                <motion.div whileHover={{ rotate: -6, scale: 1.1 }} className={`w-14 h-14 rounded-xl ${f.accent} flex items-center justify-center mb-6 transition-colors duration-300`}><f.icon size={24} strokeWidth={2} /></motion.div>
-                <h3 className="text-2xl md:text-3xl font-display mb-4 text-chrono-text tracking-tight" style={{ fontWeight: 600 }}>{f.title}</h3>
-                <p className="text-base font-body leading-relaxed text-chrono-text/60">{f.desc}</p>
+        <div className="space-y-6">
+          {features.map((f, i) => {
+            const isEven = i % 2 === 0;
+            return (
+              <motion.div key={f.title} style={{ x: isEven ? xLeft : xRight }}>
+                <FadeUp delay={i * 0.08}>
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    className={`group relative rounded-3xl overflow-hidden border border-[var(--line)] hover:border-chrono-accent/30 transition-all duration-500 ${isEven ? "md:flex-row" : "md:flex-row-reverse"} flex flex-col md:flex`}
+                  >
+                    {/* Photo side */}
+                    <div className="relative w-full md:w-2/5 h-48 md:h-auto min-h-[240px] overflow-hidden">
+                      <Image src={f.photo} alt={f.title} fill className="object-cover transition-transform duration-700 group-hover:scale-110" sizes="40vw" unoptimized />
+                      <div className={`absolute inset-0 bg-gradient-to-br ${f.gradient} opacity-30 mix-blend-multiply`} />
+                    </div>
+                    {/* Content side */}
+                    <div className="flex-1 p-8 md:p-12 flex flex-col justify-center bg-[var(--card-bg)]">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${f.gradient} flex items-center justify-center`}>
+                          <f.icon size={20} strokeWidth={2} className="text-white" />
+                        </div>
+                        <h3 className="text-2xl md:text-3xl font-display text-chrono-text tracking-tight" style={{ fontWeight: 700 }}>{f.title}</h3>
+                      </div>
+                      <p className="text-base md:text-lg font-body leading-relaxed text-chrono-text/60 max-w-md">{f.desc}</p>
+                    </div>
+                  </motion.div>
+                </FadeUp>
               </motion.div>
-            </FadeUp>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

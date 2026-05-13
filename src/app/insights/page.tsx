@@ -1,16 +1,19 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { AIStory } from "@/data/demo";
+import { AIStory, demoEvents } from "@/data/demo";
 import AIStorySummary from "@/components/timeline/AIStorySummary";
 import StatCard from "@/components/insights/StatCard";
-import CategoryChart from "@/components/insights/CategoryChart";
 import YearChart from "@/components/insights/YearChart";
 import CityChart from "@/components/insights/CityChart";
+import FunFacts from "@/components/insights/FunFacts";
+import ActivityHeatmap from "@/components/insights/ActivityHeatmap";
+import AdventureProfile from "@/components/insights/AdventureProfile";
+import MemoryPostcard from "@/components/insights/MemoryPostcard";
 import ShareCard from "@/components/share/ShareCard";
 import { AIStoryLoadingSkeleton } from "@/components/ui/Skeletons";
 import EmptyState from "@/components/ui/EmptyState";
@@ -18,6 +21,46 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { toast } from "sonner";
 import { useStories } from "@/hooks/useStories";
 import { useInsights } from "@/hooks/useInsights";
+
+function buildFunFacts(stats: {
+  totalEvents: number;
+  totalPhotos: number;
+  citiesVisited: number;
+  yearlyEvents: { year: number; count: number }[];
+}) {
+  const { totalEvents, totalPhotos, citiesVisited, yearlyEvents } = stats;
+  const yearsTracked = Math.max(1, yearlyEvents.length);
+  const daysPerEvent = totalEvents > 0 ? Math.round((yearsTracked * 365) / totalEvents) : 0;
+  const photoAlbums = Math.max(1, Math.round(totalPhotos / 100));
+  const avgPerYear = (totalEvents / yearsTracked).toFixed(1);
+
+  return [
+    {
+      number: daysPerEvent.toString(),
+      unit: "days",
+      fact: `One memorable moment every ${daysPerEvent} days.`,
+      detail: "The rhythm of a well-lived life.",
+    },
+    {
+      number: photoAlbums.toString(),
+      unit: "albums",
+      fact: `Enough photos to fill ${photoAlbums} keepsake books.`,
+      detail: `${totalPhotos.toLocaleString()} frames worth saving.`,
+    },
+    {
+      number: citiesVisited.toString(),
+      unit: "places",
+      fact: `${citiesVisited} dot${citiesVisited === 1 ? "" : "s"} on your personal world map.`,
+      detail: "Each one with its own weather and song.",
+    },
+    {
+      number: avgPerYear,
+      unit: "per yr",
+      fact: `Roughly ${avgPerYear} highlights per orbit around the sun.`,
+      detail: `${yearsTracked} year${yearsTracked === 1 ? "" : "s"} of intentional living.`,
+    },
+  ];
+}
 
 export default function InsightsPageWrapper() {
   return (
@@ -239,84 +282,14 @@ function InsightsPage() {
           <h1 className="text-3xl sm:text-5xl md:text-7xl font-display font-bold mb-6 tracking-tight">
             <em className="text-chrono-text">Insights</em>
           </h1>
-          <p className="text-base font-body font-light text-chrono-muted max-w-md mx-auto leading-relaxed">
-            Patterns, highlights, and stories hidden in your
-            life&apos;s timeline.
+          <p className="text-base md:text-lg font-body font-light text-chrono-muted max-w-xl mx-auto leading-relaxed">
+            Your life, told in numbers, patterns, and the kind of small details
+            that make you say <em className="text-chrono-accent not-italic">huh, that&apos;s actually me.</em>
           </p>
         </motion.div>
       </section>
 
-      {stats && (<section className="px-6 mb-28">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-[var(--line)]">
-          <StatCard label="Total Events" value={stats.totalEvents} delay={0} />
-          <StatCard label="Photos captured" value={stats.totalPhotos} delay={0.1} />
-          <StatCard label="Cities visited" value={stats.citiesVisited} delay={0.2} />
-          <StatCard label="Most active year" value={stats.mostActiveYear.toString()} delay={0.3} />
-        </div>
-      </section>)}
-
-      {stats && (<section className="px-6 mb-28">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1 }}
-            className="text-center mb-16"
-          >
-            <span className="section-label mb-5 block">Highlights</span>
-            <h2 className="text-3xl md:text-4xl font-display font-light tracking-tight">
-              Your Year in Review
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[var(--line)]">
-            {[
-              { label: "Most visited city", value: stats.mostVisitedCity },
-              { label: "Top category", value: stats.topCategory },
-              { label: "Longest active run", value: stats.longestActiveRun },
-            ].map((item, i) => (
-              <motion.div
-                key={item.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12, duration: 0.9 }}
-                className="bg-chrono-bg p-10 text-center card-hover"
-              >
-                <div className="text-2xl font-display font-light text-chrono-text mb-3">
-                  {item.value}
-                </div>
-                <div className="section-label">
-                  {item.label}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>)}
-
-      {stats && (<section className="px-6 mb-28">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-10"
-          >
-            <span className="section-label mb-5 block">Analytics</span>
-            <h2 className="text-2xl md:text-3xl font-display font-light tracking-tight">
-              Data Visualizations
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <CategoryChart categories={stats.categories} />
-            <YearChart data={stats.yearlyEvents} />
-          </div>
-          <CityChart data={stats.cityVisits} />
-        </div>
-      </section>)}
+      {stats && (<StatsAndCharts stats={stats} isShowingDemo={isShowingDemo} />)}
 
       {stories.length > 0 && (
         <section className="px-6">
@@ -502,5 +475,222 @@ function InsightsPage() {
         loading={deletingStory}
       />
     </div>
+  );
+}
+
+interface StatsAndChartsProps {
+  stats: {
+    totalEvents: number;
+    totalPhotos: number;
+    citiesVisited: number;
+    mostActiveYear: number;
+    mostVisitedCity: string;
+    topCategory: string;
+    longestActiveRun: string;
+    categories: { name: string; count: number; color: string }[];
+    yearlyEvents: { year: number; count: number }[];
+    cityVisits: { city: string; count: number }[];
+  };
+  isShowingDemo: boolean;
+}
+
+function StatsAndCharts({ stats, isShowingDemo }: StatsAndChartsProps) {
+  const funFacts = useMemo(() => buildFunFacts(stats), [stats]);
+  const yearCounts = useMemo(
+    () => stats.yearlyEvents.map((y) => y.count),
+    [stats.yearlyEvents]
+  );
+
+  return (
+    <>
+      <section className="px-6 mb-20" aria-labelledby="life-in-numbers-heading">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-10"
+          >
+            <span className="section-label mb-4 block">Life in numbers</span>
+            <h2
+              id="life-in-numbers-heading"
+              className="text-2xl md:text-4xl font-display font-light tracking-tight"
+            >
+              The headlines from <em className="text-chrono-accent">your story</em>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-[1px] bg-[var(--line)] border border-[var(--line-strong)]">
+            <StatCard
+              label="Memories captured"
+              value={stats.totalEvents}
+              caption="Each one deliberately remembered."
+              spark={yearCounts}
+              delay={0}
+            />
+            <StatCard
+              label="Photos held onto"
+              value={stats.totalPhotos}
+              caption="A scrapbook that won't fade."
+              delay={0.1}
+            />
+            <StatCard
+              label="Places that became part of you"
+              value={stats.citiesVisited}
+              caption="Each one with its own weather."
+              delay={0.2}
+            />
+            <StatCard
+              label="Brightest year so far"
+              value={stats.mostActiveYear.toString()}
+              caption="The year you couldn't stop showing up."
+              delay={0.3}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 mb-24">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-8"
+          >
+            <span className="section-label mb-3 block">Did you know</span>
+            <h2 className="text-xl md:text-2xl font-display font-light italic text-chrono-muted">
+              Fun ways to look at all of this
+            </h2>
+          </motion.div>
+
+          <FunFacts facts={funFacts} />
+        </div>
+      </section>
+
+      {isShowingDemo && (
+        <section className="px-6 mb-24" aria-labelledby="postcard-heading">
+          <div className="max-w-5xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="text-center mb-8"
+            >
+              <span className="section-label mb-3 block">From the archive</span>
+              <h2
+                id="postcard-heading"
+                className="text-2xl md:text-3xl font-display font-light tracking-tight"
+              >
+                A postcard from <em className="text-chrono-accent">your timeline</em>
+              </h2>
+            </motion.div>
+
+            <MemoryPostcard events={demoEvents} />
+          </div>
+        </section>
+      )}
+
+      <section className="px-6 mb-24">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-10"
+          >
+            <span className="section-label mb-3 block">Who you are, on paper</span>
+            <h2 className="text-2xl md:text-3xl font-display font-light tracking-tight">
+              Your <em className="text-chrono-accent">adventure profile</em>
+            </h2>
+          </motion.div>
+
+          <AdventureProfile
+            categories={stats.categories}
+            totalEvents={stats.totalEvents}
+            citiesVisited={stats.citiesVisited}
+          />
+        </div>
+      </section>
+
+      {isShowingDemo && (
+        <section className="px-6 mb-24" aria-labelledby="heatmap-heading">
+          <div className="max-w-5xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8 }}
+              className="text-center mb-10"
+            >
+              <span className="section-label mb-3 block">The shape of your years</span>
+              <h2
+                id="heatmap-heading"
+                className="text-2xl md:text-3xl font-display font-light tracking-tight"
+              >
+                When the <em className="text-chrono-accent">good stuff</em> happened
+              </h2>
+            </motion.div>
+
+            <ActivityHeatmap events={demoEvents} />
+          </div>
+        </section>
+      )}
+
+      <section className="px-6 mb-28">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-10"
+          >
+            <span className="section-label mb-3 block">By the data</span>
+            <h2 className="text-2xl md:text-3xl font-display font-light tracking-tight">
+              The <em className="text-chrono-accent">when</em> and <em className="text-chrono-accent">where</em>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-3">
+              <YearChart data={stats.yearlyEvents} />
+            </div>
+            <div className="lg:col-span-2">
+              <CityChart data={stats.cityVisits.slice(0, 8)} />
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-[var(--line)] border border-[var(--line-strong)]">
+            {[
+              { label: "Headquarters", value: stats.mostVisitedCity, hint: "Where most of your story unfolds." },
+              { label: "Signature genre", value: stats.topCategory, hint: "The category you keep coming back to." },
+              { label: "Best run", value: stats.longestActiveRun, hint: "Your longest streak of being present." },
+            ].map((item, i) => (
+              <motion.div
+                key={item.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.7 }}
+                className="bg-chrono-bg p-8 text-center card-hover"
+              >
+                <div className="text-xl md:text-2xl font-display font-medium text-chrono-text mb-2">
+                  {item.value}
+                </div>
+                <div className="section-label mb-2">{item.label}</div>
+                <div className="text-xs font-body font-light italic text-chrono-muted">
+                  {item.hint}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

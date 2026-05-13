@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useRef, useEffect } from "react";
+import { memo, useCallback, useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -20,10 +20,10 @@ export default memo(function AddMemoryButton() {
     uploadImageIfNeeded, handleDrop, handleFileSelect,
   } = useEventForm();
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setOpen(false);
     resetForm();
-  };
+  }, [resetForm]);
 
   const handleSave = async () => {
     const errs = validate();
@@ -78,7 +78,7 @@ export default memo(function AddMemoryButton() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
+  }, [open, handleClose]);
 
   if (!session) return null;
 

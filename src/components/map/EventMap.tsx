@@ -54,7 +54,8 @@ export default function EventMap({ events }: EventMapProps) {
     }));
   }, [eventsWithCoords]);
 
-  // Initialize map (runs once)
+  // Initialize map (runs once). Tile layer URL is set by the theme-aware
+  // effect below — keeping that logic in one place avoids drift.
   useEffect(() => {
     if (!mapRef.current || leafletMap.current) return;
 
@@ -68,11 +69,7 @@ export default function EventMap({ events }: EventMapProps) {
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
-      const tileUrl = theme === "light"
-        ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-
-      const tileLayer = L.tileLayer(tileUrl, { maxZoom: 19, subdomains: "abcd" }).addTo(map);
+      const tileLayer = L.tileLayer("", { maxZoom: 19, subdomains: "abcd" }).addTo(map);
       tileLayerRef.current = tileLayer;
 
       leafletMap.current = map;
@@ -89,14 +86,14 @@ export default function EventMap({ events }: EventMapProps) {
     };
   }, []);
 
-  // Swap tile layer when theme changes
+  // Set/swap tile layer URL whenever the theme changes (and on first mount).
   useEffect(() => {
     if (!leafletMap.current || !tileLayerRef.current) return;
     const tileUrl = theme === "light"
       ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
     tileLayerRef.current.setUrl(tileUrl);
-  }, [theme]);
+  }, [theme, mapLoaded]);
 
   // Manage markers when events change
   useEffect(() => {

@@ -40,16 +40,12 @@ function InsightsPage() {
   const [deleteStoryId, setDeleteStoryId] = useState<string | null>(null);
   const [deletingStory, setDeletingStory] = useState(false);
 
+  // Read sharing preference from the server, not localStorage — only the
+  // server's view of preferences is authoritative across devices.
   useEffect(() => {
-    const stored = localStorage.getItem("chrono-privacy");
-    if (stored) {
-      try {
-        const prefs = JSON.parse(stored);
-        setSharingEnabled(prefs.shareableStories ?? true);
-      } catch { /* ignore */ }
-    }
     if (!session) return;
-    fetch("/api/user")
+    const controller = new AbortController();
+    fetch("/api/user", { signal: controller.signal })
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         const prefs = data?.user?.preferences;
@@ -58,6 +54,7 @@ function InsightsPage() {
         }
       })
       .catch(() => {});
+    return () => controller.abort();
   }, [session]);
 
   const searchParams = useSearchParams();

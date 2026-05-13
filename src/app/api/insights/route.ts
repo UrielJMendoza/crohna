@@ -113,8 +113,12 @@ export async function GET() {
   }
 }
 
+// Counts the longest streak of events where each consecutive pair is within
+// a week of the next. Returned as a string like "12 events" so the UI can
+// display it as a single value.
 function calculateLongestActiveRun(dates: Date[]): string {
-  if (dates.length < 2) return dates.length === 1 ? "1 day" : "—";
+  if (dates.length === 0) return "—";
+  if (dates.length === 1) return "1 event";
 
   const sorted = [...dates].sort((a, b) => a.getTime() - b.getTime());
   const dayMs = 86400000;
@@ -126,7 +130,6 @@ function calculateLongestActiveRun(dates: Date[]): string {
       (sorted[i].getTime() - sorted[i - 1].getTime()) / dayMs
     );
     if (diffDays <= 7) {
-      // Events within a week count as part of the same "active streak"
       currentStreak++;
     } else {
       maxStreak = Math.max(maxStreak, currentStreak);
@@ -135,6 +138,5 @@ function calculateLongestActiveRun(dates: Date[]): string {
   }
   maxStreak = Math.max(maxStreak, currentStreak);
 
-  if (maxStreak === 1) return "1 event";
   return `${maxStreak} events`;
 }

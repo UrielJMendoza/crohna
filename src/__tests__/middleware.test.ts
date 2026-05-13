@@ -2,10 +2,12 @@ import { describe, it, expect } from "vitest";
 import { middleware, config } from "@/middleware";
 import { NextRequest } from "next/server";
 
-// Compiles a Next.js path-to-regexp matcher into a RegExp we can test against.
+// Compiles a Next.js path-to-regexp matcher (string OR { source } object) into
+// a RegExp we can test against.
 function matchesMiddleware(pathname: string): boolean {
-  return config.matcher.some((pattern) => {
-    const regex = new RegExp(`^${pattern.replace(/\((\?[!=].*?)\)/g, "($1)")}$`);
+  return config.matcher.some((entry) => {
+    const source = typeof entry === "string" ? entry : entry.source;
+    const regex = new RegExp(`^${source.replace(/\((\?[!=].*?)\)/g, "($1)")}$`);
     return regex.test(pathname);
   });
 }

@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { mockPrisma } from "../setup";
 import { NextRequest } from "next/server";
 
-const mockSession = { user: { email: "test@example.com" } };
+const mockSession = { user: { id: "user-1", email: "test@example.com" } };
 const mockUser = { id: "user-1", email: "test@example.com", name: "Test" };
 
 function makeRequest(body: unknown) {
@@ -67,16 +67,6 @@ describe("DELETE /api/user — Account Deletion", () => {
     expect(res.status).toBe(200);
     expect(data.success).toBe(true);
     expect(mockPrisma.$transaction).toHaveBeenCalled();
-  });
-
-  it("returns 404 for non-existent user", async () => {
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
-    mockPrisma.user.findUnique.mockResolvedValue(null);
-
-    const req = makeRequest({ confirm: "DELETE_MY_ACCOUNT" });
-    const res = await DELETE(req);
-
-    expect(res.status).toBe(404);
   });
 
   it("rejects invalid JSON body", async () => {

@@ -1,10 +1,9 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { validateCsrf } from "@/lib/csrf";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-auth";
 
 // POST /api/events/[id]/restore — restore a soft-deleted event
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,18 +12,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (csrfError) return csrfError;
 
     const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const existing = await prisma.event.findFirst({
       where: { id, userId: user.id, deletedAt: { not: null } },

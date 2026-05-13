@@ -37,22 +37,72 @@ function validateCsrfInMiddleware(req: NextRequest): NextResponse | null {
   return null;
 }
 
+/**
+ * Build a per-request CSP value with a nonce. Next.js auto-tags its inline
+ * scripts with this nonce when we set the `x-nonce` request header, which
+ * lets us drop `'unsafe-inline'` from script-src — the original CSP made
+ * XSS protection theatre.
+ *
+ * style-src keeps `'unsafe-inline'` because Tailwind / framer-motion emit
+ * inline styles via the `style` attribute, which is much lower-risk than
+ * inline scripts.
+ */
+function buildCsp(nonce: string): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://va.vercel-scripts.com`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' blob: data: *.supabase.co lh3.googleusercontent.com *.basemaps.cartocdn.com images.unsplash.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://fonts.googleapis.com https://fonts.gstatic.com",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
+  ].join("; ") + ";";
+}
+
 export async function middleware(req: NextRequest) {
   try {
+    // CSRF defense-in-depth on mutating API requests (no-op for GET/HEAD/OPTIONS,
+    // and the matcher excludes /api/auth/*).
     const csrfError = validateCsrfInMiddleware(req);
     if (csrfError) return csrfError;
-    return NextResponse.next();
+
+    // Generate a fresh nonce per request so Next.js can tag its inline scripts.
+    // crypto.randomUUID is available in the Edge runtime.
+    const nonce = btoa(crypto.randomUUID());
+    const csp = buildCsp(nonce);
+
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-nonce", nonce);
+    requestHeaders.set("Content-Security-Policy", csp);
+
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set("Content-Security-Policy", csp);
+    return response;
   } catch {
-    // Never let the Edge function throw — that produces
-    // MIDDLEWARE_INVOCATION_FAILED, which broke the OAuth flow. Fail open
-    // and let the route handler enforce auth via getServerSession().
+    // Never let the Edge function throw — that produces MIDDLEWARE_INVOCATION_FAILED.
     return NextResponse.next();
   }
 }
 
-// Exclude /api/auth/* (NextAuth handles its own flow, including CSRF) and
-// /api/health from middleware execution. Each protected route enforces auth
-// via getServerSession(authOptions) on its own, so there is no lost coverage.
+// Match every request EXCEPT:
+//   - Next.js framework assets (_next/static, _next/image)
+//   - The favicon
+//   - NextAuth's own routes (/api/auth/*) — it handles CSRF itself
+//   - The health endpoint (/api/health) — must be reachable unauthenticated
+//   - Prefetch requests (no need to set CSP, and avoids needless work)
 export const config = {
-  matcher: ["/api/((?!auth/|auth$|health/|health$).*)"],
+  matcher: [
+    {
+      // Negative lookaheads use trailing `/` or `$` so /api/authentication and
+      // /api/healthy still match (they aren't NextAuth or the health endpoint).
+      source: "/((?!_next/static/|_next/image|favicon.ico|api/auth/|api/auth$|api/health/|api/health$).*)",
+      missing: [
+        { type: "header", key: "next-router-prefetch" },
+        { type: "header", key: "purpose", value: "prefetch" },
+      ],
+    },
+  ],
 };

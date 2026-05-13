@@ -27,10 +27,10 @@ const config: Config = {
         border: "var(--border)",
       },
       fontFamily: {
-        display: ["'EB Garamond'", "Georgia", "serif"],
-        editorial: ["'PP Editorial New'", "'EB Garamond'", "Georgia", "serif"],
+        display: ["var(--font-display)", "Georgia", "serif"],
+        editorial: ["'PP Editorial New'", "var(--font-display)", "Georgia", "serif"],
         body: ["var(--font-body)", "system-ui", "sans-serif"],
-        sans: ["'Inter'", "var(--font-body)", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "var(--font-body)", "system-ui", "sans-serif"],
       },
       borderRadius: {
         "2xl": "16px",

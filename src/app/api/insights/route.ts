@@ -1,31 +1,22 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-auth";
 
 const checkInsightsLimit = createRateLimiter("insights", 20, 60_000);
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
-    if (!(await checkInsightsLimit(session.user.email)).allowed) {
+    if (!(await checkInsightsLimit(user.id)).allowed) {
       return apiError("Too many requests. Please wait a minute.", 429);
     }
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     // Check if user has any events first (cheap count query)
     const totalEvents = await prisma.event.count({
@@ -117,13 +108,13 @@ function calculateLongestActiveRun(dates: Date[]): string {
   if (dates.length < 2) return dates.length === 1 ? "1 day" : "—";
 
   const sorted = [...dates].sort((a, b) => a.getTime() - b.getTime());
-  const dayMs = 86400000;
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
   let maxStreak = 1;
   let currentStreak = 1;
 
   for (let i = 1; i < sorted.length; i++) {
     const diffDays = Math.round(
-      (sorted[i].getTime() - sorted[i - 1].getTime()) / dayMs
+      (sorted[i].getTime() - sorted[i - 1].getTime()) / MS_PER_DAY
     );
     if (diffDays <= 7) {
       // Events within a week count as part of the same "active streak"

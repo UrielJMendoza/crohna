@@ -84,14 +84,23 @@ export const createStorySchema = z.object({
 
 // --- User schemas ---
 
+// Strict shape for the keys we actually use, plus a size cap for any
+// forward-compat keys passed through. Keep this in sync with the consumers
+// in src/app/settings/page.tsx.
+export const userPreferencesSchema = z
+  .object({
+    shareableStories: z.boolean().optional(),
+    showLocationOnShared: z.boolean().optional(),
+    theme: z.enum(["light", "dark", "system"]).optional(),
+  })
+  .strict()
+  .refine((val) => JSON.stringify(val).length <= 2_000, {
+    message: "Preferences too large (max 2KB)",
+  });
+
 export const updateUserSchema = z.object({
   name: z.string().max(200, "Name must be under 200 characters").optional(),
-  preferences: z
-    .record(z.string(), z.unknown())
-    .refine((val) => JSON.stringify(val).length <= 10_000, {
-      message: "Preferences too large (max 10KB)",
-    })
-    .optional(),
+  preferences: userPreferencesSchema.optional(),
 });
 
 export const deleteAccountSchema = z.object({

@@ -3,7 +3,7 @@ import { POST } from "@/app/api/upload/route";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 
-const mockSession = { user: { email: "test@example.com" } };
+const mockSession = { user: { id: "user-1", email: "test@example.com" } };
 
 beforeEach(() => {
   vi.clearAllMocks();

@@ -1,6 +1,4 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { validateCsrf } from "@/lib/csrf";
@@ -8,6 +6,7 @@ import { validateImageUrl } from "@/lib/url-validation";
 import { createEventSchema, parseBody } from "@/lib/validation";
 import { apiSuccess, apiError, apiPaginated } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-auth";
 
 const checkEventLimit = createRateLimiter("events", 30, 60_000);
 
@@ -42,19 +41,11 @@ function formatEvent(e: {
 // GET /api/events — returns all events for the authenticated user
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const { searchParams } = new URL(req.url);
     const year = searchParams.get("year");
@@ -103,23 +94,15 @@ export async function POST(req: NextRequest) {
     const csrfError = validateCsrf(req);
     if (csrfError) return csrfError;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
-    if (!(await checkEventLimit(session.user.email)).allowed) {
+    if (!(await checkEventLimit(user.id)).allowed) {
       return apiError("Too many events created. Please wait a minute.", 429);
     }
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const { data: body, error: validationError } = await parseBody(req, createEventSchema);
     if (validationError) return validationError;
@@ -162,19 +145,11 @@ export async function DELETE(req: NextRequest) {
     const csrfError = validateCsrf(req);
     if (csrfError) return csrfError;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const result = await prisma.event.updateMany({
       where: { userId: user.id, deletedAt: null },

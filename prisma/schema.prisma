@@ -96,7 +96,9 @@ model AIStory {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  // Prevent two concurrent "generate story for year X" requests from creating
+  // duplicate rows. The route's findFirst+create check is racy on its own.
+  @@unique([userId, year])
   @@index([userId])
-  @@index([userId, year])
 }
 

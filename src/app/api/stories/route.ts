@@ -1,6 +1,4 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { generateStory } from "@/lib/story-generator";
 import { createRateLimiter } from "@/lib/rate-limit";
@@ -8,25 +6,18 @@ import { validateCsrf } from "@/lib/csrf";
 import { createStorySchema, parseBody } from "@/lib/validation";
 import { apiSuccess, apiError, apiPaginated } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-auth";
 
 const checkStoryLimit = createRateLimiter("stories", 5, 60_000);
 
 // GET /api/stories — returns AI-generated stories with cursor-based pagination
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const { searchParams } = new URL(req.url);
     const limit = Math.min(Math.max(Number(searchParams.get("limit")) || 50, 1), 100);
@@ -73,23 +64,15 @@ export async function POST(req: NextRequest) {
     const csrfError = validateCsrf(req);
     if (csrfError) return csrfError;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
-    if (!(await checkStoryLimit(session.user.email)).allowed) {
+    if (!(await checkStoryLimit(user.id)).allowed) {
       return apiError("Too many story requests. Please wait a minute.", 429);
     }
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const { data: body, error: validationError } = await parseBody(req, createStorySchema);
     if (validationError) return validationError;
@@ -139,21 +122,39 @@ export async function POST(req: NextRequest) {
     const locations = Array.from(new Set(events.map((e) => e.location).filter(Boolean)));
     const photosCount = events.filter((e) => e.imageUrl).length;
 
-    const story = await prisma.aIStory.create({
-      data: {
-        userId: user.id,
-        title: generated.title,
-        period: storyPeriod,
-        year: year ? Number(year) : null,
-        summary: generated.summary,
-        highlights: generated.highlights,
-        stats: {
-          events: events.length,
-          cities: locations.length,
-          photos: photosCount,
+    let story;
+    try {
+      story = await prisma.aIStory.create({
+        data: {
+          userId: user.id,
+          title: generated.title,
+          period: storyPeriod,
+          year: year ? Number(year) : null,
+          summary: generated.summary,
+          highlights: generated.highlights,
+          stats: {
+            events: events.length,
+            cities: locations.length,
+            photos: photosCount,
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      // P2002 = Prisma unique-constraint violation. Two concurrent requests
+      // for the same year both passed the findFirst check above; the DB-level
+      // @@unique([userId, year]) guarantees only one wins. Surface as 409.
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        (error as { code?: string }).code === "P2002"
+      ) {
+        return apiError(
+          "A story for this year already exists. Delete it first or choose a different year.",
+          409
+        );
+      }
+      throw error;
+    }
 
     return apiSuccess({
       story: {

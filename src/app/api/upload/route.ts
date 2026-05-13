@@ -1,12 +1,11 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { validateCsrf } from "@/lib/csrf";
 import { getExtensionFromMime } from "@/lib/url-validation";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-auth";
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
@@ -17,13 +16,11 @@ export async function POST(req: NextRequest) {
     const csrfError = validateCsrf(req);
     if (csrfError) return csrfError;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
-    const userId = session.user.email || "unknown";
-    if (!(await checkUploadLimit(userId)).allowed) {
+    if (!(await checkUploadLimit(user.id)).allowed) {
       return apiError("Too many uploads. Please wait a minute and try again.", 429);
     }
 
@@ -46,8 +43,7 @@ export async function POST(req: NextRequest) {
 
     // Derive extension from validated MIME type, not user-supplied filename
     const ext = getExtensionFromMime(file.type);
-    const safeUserId = (session.user.email || "unknown").replace(/[^a-zA-Z0-9@._-]/g, "_");
-    const filename = `${safeUserId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const filename = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -68,7 +64,8 @@ export async function POST(req: NextRequest) {
       .getPublicUrl(filename);
 
     return apiSuccess({ url: urlData.publicUrl });
-  } catch {
+  } catch (error) {
+    logger.error("POST /api/upload error", { error: String(error) });
     return apiError("Upload failed", 500);
   }
 }

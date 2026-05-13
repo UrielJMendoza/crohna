@@ -1,6 +1,4 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { createRateLimiter } from "@/lib/rate-limit";
@@ -8,6 +6,7 @@ import { generateStory } from "@/lib/story-generator";
 import { validateCsrf } from "@/lib/csrf";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-auth";
 
 const checkStoryLimit = createRateLimiter("stories", 5, 60_000);
 
@@ -20,22 +19,15 @@ export async function PUT(
     const csrfError = validateCsrf(req);
     if (csrfError) return csrfError;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
-    if (!(await checkStoryLimit(session.user.email)).allowed) {
+    if (!(await checkStoryLimit(user.id)).allowed) {
       return apiError("Too many regeneration requests. Please wait a minute.", 429);
     }
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const { id } = await params;
 
@@ -134,18 +126,11 @@ export async function DELETE(
     const csrfError = validateCsrf(req);
     if (csrfError) return csrfError;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const { id } = await params;
 

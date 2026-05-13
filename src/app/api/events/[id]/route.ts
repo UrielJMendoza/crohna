@@ -1,29 +1,21 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { validateCsrf } from "@/lib/csrf";
 import { validateImageUrl } from "@/lib/url-validation";
 import { updateEventSchema, parseBody } from "@/lib/validation";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-auth";
 
 // GET /api/events/[id] — get a single event
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const event = await prisma.event.findFirst({
       where: { id, userId: user.id, deletedAt: null },
@@ -60,18 +52,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (csrfError) return csrfError;
 
     const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const existing = await prisma.event.findFirst({
       where: { id, userId: user.id, deletedAt: null },
@@ -135,18 +120,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (csrfError) return csrfError;
 
     const { id } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-    if (!user) {
-      return apiError("User not found", 404);
-    }
 
     const existing = await prisma.event.findFirst({
       where: { id, userId: user.id, deletedAt: null },

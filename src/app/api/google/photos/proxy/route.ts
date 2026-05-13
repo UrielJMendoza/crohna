@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { getToken } from "next-auth/jwt";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { createRateLimiter } from "@/lib/rate-limit";
-import { validateCsrf } from "@/lib/csrf";
 import { apiError } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-auth";
 
 const checkProxyLimit = createRateLimiter("google-photos-proxy", 100, 60_000);
 
@@ -16,20 +14,18 @@ const checkProxyLimit = createRateLimiter("google-photos-proxy", 100, 60_000);
  * Resolves a Google Photos mediaItemId to a fresh baseUrl and streams the image.
  * Google Photos baseUrls expire after ~1 hour, so we stored gphotos://<id>
  * as a placeholder during import. This endpoint fetches the current URL on demand.
+ *
+ * No CSRF check: this is a GET endpoint loaded by <img> tags, where Origin/Referer
+ * may be stripped by privacy proxies. Authorization is enforced via the session +
+ * the per-photo ownership check below.
  */
 export async function GET(req: NextRequest) {
   try {
-    // CSRF check on this sensitive GET endpoint
-    const csrfError = validateCsrf(req);
-    if (csrfError) return csrfError;
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
-
-    // Rate limit
-    if (!(await checkProxyLimit(session.user.email)).allowed) {
+    if (!(await checkProxyLimit(user.id)).allowed) {
       return apiError("Too many requests. Please wait a minute.", 429);
     }
 
@@ -40,12 +36,6 @@ export async function GET(req: NextRequest) {
 
     // Authorization: verify this photo belongs to the requesting user
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-    if (!user) {
-      return apiError("Unauthorized", 401);
-    }
 
     const ownsPhoto = await prisma.event.findFirst({
       where: {

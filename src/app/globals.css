@@ -19,8 +19,8 @@
   --input-bg: #F0EDE8;
 
   /* V0 template font pairing */
-  --font-editorial: 'PP Editorial New', 'EB Garamond', Georgia, serif;
-  --font-sans-alt: 'Inter', var(--font-body), system-ui, sans-serif;
+  --font-editorial: 'PP Editorial New', var(--font-display), Georgia, serif;
+  --font-sans-alt: var(--font-sans), var(--font-body), system-ui, sans-serif;
 
   /* Theme-aware shadows and scrollbar */
   --shadow-subtle: rgba(0, 0, 0, 0.04);

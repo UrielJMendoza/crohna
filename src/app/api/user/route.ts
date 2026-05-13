@@ -1,24 +1,21 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { validateCsrf } from "@/lib/csrf";
 import { updateUserSchema, deleteAccountSchema, parseBody } from "@/lib/validation";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+import { requireAuth } from "@/lib/api-auth";
 
-// GET /api/user — get user profile and preferences
+// GET /api/user — get user profile and preferences (needs full DB row for preferences/image)
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
 
     const prisma = getPrisma();
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: auth.user.id },
     });
 
     if (!user) {
@@ -46,10 +43,8 @@ export async function PUT(req: NextRequest) {
     const csrfError = validateCsrf(req);
     if (csrfError) return csrfError;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
 
     const { data: body, error: validationError } = await parseBody(req, updateUserSchema);
     if (validationError) return validationError;
@@ -58,7 +53,7 @@ export async function PUT(req: NextRequest) {
 
     const prisma = getPrisma();
     const user = await prisma.user.update({
-      where: { email: session.user.email },
+      where: { id: auth.user.id },
       data: {
         ...(name !== undefined && { name: name?.trim() || null }),
         ...(preferences !== undefined && { preferences: preferences as Prisma.InputJsonValue }),
@@ -86,25 +81,17 @@ export async function DELETE(req: NextRequest) {
     const csrfError = validateCsrf(req);
     if (csrfError) return csrfError;
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return apiError("Unauthorized", 401);
-    }
+    const auth = await requireAuth();
+    if (!auth.ok) return auth.response;
+    const { user } = auth;
 
     // Require explicit confirmation to prevent accidental deletion
     const { error: validationError } = await parseBody(req, deleteAccountSchema);
     if (validationError) return validationError;
 
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
 
-    if (!user) {
-      return apiError("User not found", 404);
-    }
-
-    // Delete all user data in order (cascade should handle this, but be explicit)
+    // Cascading FKs would handle this, but we're explicit so the order is auditable.
     await prisma.$transaction([
       prisma.aIStory.deleteMany({ where: { userId: user.id } }),
       prisma.event.deleteMany({ where: { userId: user.id } }),

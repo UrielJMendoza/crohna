@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { logger } from "@/lib/logger";
 
 const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+let warnedMissingKey = false;
 
 interface EventSummary {
   title: string;
@@ -55,7 +56,14 @@ export async function generateStory(
   period: string,
   existingTitle?: string
 ): Promise<GeneratedStory> {
-  if (!hasApiKey || events.length === 0) {
+  if (!hasApiKey) {
+    if (!warnedMissingKey) {
+      warnedMissingKey = true;
+      logger.warn("ANTHROPIC_API_KEY not set — using template fallback for story generation. Set the key to enable Claude-generated narratives.");
+    }
+    return generateTemplateFallback(events, period, existingTitle);
+  }
+  if (events.length === 0) {
     return generateTemplateFallback(events, period, existingTitle);
   }
 

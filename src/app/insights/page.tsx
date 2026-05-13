@@ -35,6 +35,14 @@ function InsightsPage() {
   const [generating, setGenerating] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareStory, setShareStory] = useState<AIStory | null>(null);
+  const [sharePayload, setSharePayload] = useState<{
+    title: string;
+    content: string;
+    highlights: string[];
+    stats?: Record<string, string | number>;
+    type: "story" | "year-review";
+  } | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
   const [storyFilter, setStoryFilter] = useState<"all" | "year" | "chapter">("all");
   const [sharingEnabled, setSharingEnabled] = useState(true);
   const [deleteStoryId, setDeleteStoryId] = useState<string | null>(null);
@@ -74,9 +82,39 @@ function InsightsPage() {
     }
   }, [mutateStories]);
 
-  const handleShare = useCallback((story: AIStory) => {
+  const handleShare = useCallback(async (story: AIStory) => {
     setShareStory(story);
+    setShareLoading(true);
     setShareOpen(true);
+    try {
+      const res = await fetch(`/api/stories/${story.id}/share`);
+      if (res.status === 403) {
+        toast.error("Sharing is disabled. Enable it in Settings → Privacy.");
+        setShareOpen(false);
+        setShareStory(null);
+        return;
+      }
+      if (!res.ok) {
+        toast.error("Failed to prepare share payload");
+        setShareOpen(false);
+        setShareStory(null);
+        return;
+      }
+      const data = await res.json();
+      setSharePayload({
+        title: data.share.title,
+        content: data.share.content,
+        highlights: data.share.highlights ?? [],
+        stats: data.share.stats,
+        type: data.share.type,
+      });
+    } catch {
+      toast.error("Failed to prepare share payload");
+      setShareOpen(false);
+      setShareStory(null);
+    } finally {
+      setShareLoading(false);
+    }
   }, []);
 
   const handleConfirmDeleteStory = useCallback(async () => {
@@ -441,15 +479,15 @@ function InsightsPage() {
         </motion.div>
       )}
 
-      {shareStory && !isShowingDemo && (
+      {shareStory && !isShowingDemo && sharePayload && !shareLoading && (
         <ShareCard
           isOpen={shareOpen}
-          onClose={() => { setShareOpen(false); setShareStory(null); }}
-          type={shareStory.year ? "year-review" : "story"}
-          title={shareStory.title}
-          content={shareStory.summary}
-          stats={shareStory.stats}
-          highlights={shareStory.highlights}
+          onClose={() => { setShareOpen(false); setShareStory(null); setSharePayload(null); }}
+          type={sharePayload.type}
+          title={sharePayload.title}
+          content={sharePayload.content}
+          stats={sharePayload.stats}
+          highlights={sharePayload.highlights}
         />
       )}
 

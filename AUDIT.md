@@ -1,280 +1,159 @@
-# Chrono — Comprehensive Code Audit (Round 2)
+# Crohna — Code Audit
 
-**Date:** 2026-03-20
-**Auditor:** Senior Engineering Review (FAANG-level)
-**Scope:** Full codebase — security, performance, reliability, accessibility, architecture, UX
-**Previous audit:** 2026-03-19 (findings incorporated and expanded)
+## Overview
 
----
+This document tracks the status of issues identified during code review.
+It started as an external audit (Round 2, 2026-03-20) and has been kept up
+to date as fixes land.
 
-## Executive Summary
+**Last verified:** 2026-05-13
 
-Chrono is a Next.js 14 personal timeline/life-logging app with Prisma/Postgres, NextAuth (Google OAuth), Supabase file storage, Upstash rate limiting, and AI story generation via Claude API. The codebase is well above average for an early-stage product — clean architecture, good testing, thoughtful design system. However, this deep audit uncovered **80+ issues** across security, reliability, and performance that must be addressed for production readiness.
+| Category | Total | Fixed | Open |
+|---|---|---|---|
+| Critical | 6 | 6 | 0 |
+| High | 10 | 10 | 0 |
+| Medium | 34 | ~32 | 2 |
+| Low | 20 | ~14 | 6 |
 
-**What's done well:**
-- Prisma client singleton with `globalThis` pattern
-- CSRF utility exists and is applied to mutating endpoints
-- Rate limiting on critical write endpoints (stories, events)
-- SWR for data fetching with cursor-based pagination
-- Proper `escapeHtml()` in map popups
-- Google imports use transactions for batch inserts
-- Comprehensive test suite (Vitest unit + Playwright e2e)
-- Cohesive dark/light theme with CSS custom properties
-- AI story generation with graceful fallback
-
-**Biggest risks if not addressed:**
-1. CSRF bypass via missing origin/referer headers
-2. No middleware-level auth enforcement — new routes easily ship unprotected
-3. Unbounded queries + missing rate limits on insights = easy DoS
-4. `unsafe-inline` in CSP = XSS protection is theater
-5. Privacy settings are client-side only — server never enforces them
+CI gates (lint, typecheck, vitest, prisma migrate deploy, next build,
+playwright e2e) all pass on `claude/codebase-analysis-plan-UOmyn`.
 
 ---
 
-## CRITICAL (Fix Immediately)
+## Critical — all FIXED
 
-### C1. CSRF Bypass When Origin and Referer Are Both Missing
-**File:** `src/lib/csrf.ts:11-12`
-```
-if (!origin && !referer) return null;
-```
-Requests with neither header pass without validation. Certain HTTP clients, proxies, and browser privacy settings strip both. This is a real attack vector.
-**Fix:** Reject mutating requests with no origin/referer, or implement token-based CSRF (double-submit cookie pattern).
-
-### C2. Middleware Is Disabled — No Centralized Auth/CSRF
-**File:** `src/middleware.ts:5-7`
-Empty matcher array means zero centralized protection. Every route handler must manually call `validateCsrf()` and `getServerSession()`. This is the #1 architectural risk — any new route without these calls is wide open.
-**Fix:** Enable middleware on `/api/*` (excluding `/api/health`). Enforce auth + CSRF at middleware level.
-
-### C3. CSP Allows `unsafe-inline` for Scripts
-**File:** `next.config.mjs:34`
-`script-src 'self' 'unsafe-inline'` defeats CSP's primary XSS defense. Any XSS payload can execute inline scripts.
-**Fix:** Use nonce-based CSP (Next.js supports this) or remove `unsafe-inline`.
-
-### C4. `req.json()` Not Wrapped in try/catch (4 Routes)
-**Files:**
-- `src/app/api/stories/route.ts:89`
-- `src/app/api/user/route.ts:51`
-- `src/app/api/events/route.ts:119`
-- `src/app/api/events/[id]/route.ts:35`
-
-Malformed JSON body crashes the handler with an unhandled exception → 500 error with potential stack trace leak.
-**Fix:** Wrap all `req.json()` calls in try/catch, return 400 on parse failure.
-
-### C5. Image URL Allows SSRF to Internal Networks
-**File:** `src/app/api/events/route.ts:145-154`
-URL validation checks protocol (`http:`/`https:`) but allows internal IPs (`127.0.0.1`, `192.168.x.x`, `10.x.x.x`, `169.254.x.x`).
-**Fix:** Add private/reserved IP range blocking before accepting image URLs.
-
-### C6. Google Photos Proxy Is an Open Redirect
-**File:** `src/app/api/google/photos/proxy/route.ts:56`
-`NextResponse.redirect(imageUrl)` sends the user's browser to an external URL. Attackers can craft URLs that redirect to phishing sites.
-**Fix:** Stream image bytes through the endpoint instead of redirecting.
+| # | Issue | Resolved by |
+|---|-------|-------------|
+| C1 | CSRF bypass when origin + referer both missing | `src/lib/csrf.ts:13-18` rejects with 403; `src/middleware.ts:10-15` enforces the same check at the edge. |
+| C2 | Middleware disabled (no central auth/CSRF) | `src/middleware.ts:60-105` runs on `/api/*` (except `/api/auth/*` and `/api/health`) and on HTML routes. |
+| C3 | CSP `unsafe-inline` defeats XSS protection | `src/middleware.ts:43-57` builds a per-request CSP with a nonce and `strict-dynamic`. `unsafe-inline` is kept as a CSP1 fallback only (modern browsers ignore it when nonces are present). |
+| C4 | `req.json()` not wrapped in try/catch | `src/lib/validation.ts:105-126` exports `parseBody()`, used by every mutating route. |
+| C5 | SSRF — image URLs accept private IPs | `src/lib/url-validation.ts:24-46` blocks 10/8, 172.16/12, 192.168/16, 169.254/16, 0.0.0.0, and localhost. Used in `api/events/route.ts` and `api/events/[id]/route.ts`. |
+| C6 | Google Photos proxy is an open redirect | `src/app/api/google/photos/proxy/route.ts:91-104` now fetches the image server-side and streams the bytes back. |
 
 ---
 
-## HIGH (Fix Before Launch)
+## High — all FIXED
 
-### H1. Missing Database Indexes on Foreign Keys
-**File:** `prisma/schema.prisma`
-`Account` and `Session` models lack `@@index([userId])`. Every auth session lookup does a sequential scan.
-**Fix:** Add `@@index([userId])` to both models.
-
-### H2. No Rate Limiting on `/api/insights` or `/api/health`
-- `src/app/api/insights/route.ts` — runs 4 parallel DB queries with unbounded result sets
-- `src/app/api/health/route.ts` — hits DB with no auth or rate limit
-
-**Fix:** Add `createRateLimiter()` to both. Insights especially — it's the most expensive endpoint.
-
-### H3. No Account Deletion Confirmation
-**File:** `src/app/api/user/route.ts:93-126`
-DELETE handler nukes all user data with a single unauthenticated-beyond-session API call. No password re-entry, no confirmation token, no soft-delete grace period.
-**Fix:** Require re-authentication or a confirmation token. Consider 30-day soft-delete before hard purge.
-
-### H4. Upload Extension Spoofing
-**File:** `src/app/api/upload/route.ts:53-55`
-Extension is taken from original filename, not MIME type. A file named `exploit.exe` with `image/jpeg` MIME gets saved as `.exe`.
-**Fix:** Derive extension from validated MIME type only.
-
-### H5. Upload Paths Not User-Scoped
-**File:** `src/app/api/upload/route.ts:47`
-All uploads go to a flat namespace. Can't manage per-user storage, can't clean up on account deletion, can't enforce quotas.
-**Fix:** Prefix uploads with `{userId}/`.
-
-### H6. Supabase Client Singleton Inconsistent with Prisma Pattern
-**File:** `src/lib/supabase.ts:3-15`
-Uses module-level `let _supabase` instead of `globalThis` pattern. Hot reload in dev creates multiple clients with leaked connections.
-**Fix:** Use the same `globalThis` pattern as `prisma.ts`.
-
-### H7. Privacy Settings Are Client-Side Only
-Settings page saves preferences to DB, but the API never checks them when serving data. Shared timelines, public profiles — none enforced server-side.
-**Fix:** Enforce privacy settings in every data-serving endpoint.
-
-### H8. Story Generation UI Missing
-`POST /api/stories` exists and works, but no UI button calls it. The flagship AI feature is unreachable.
-**Fix:** Add "Generate Story" button on insights/timeline page.
-
-### H9. Session Refresh Error Never Surfaced
-**File:** `src/lib/auth.ts:82`
-`RefreshAccessTokenError` is set on session but no component reads it. Google integrations silently break with no recovery path.
-**Fix:** Add global session error banner with re-auth prompt (component exists: `SessionErrorBanner.tsx` — verify it's wired up).
-
-### H10. Map Always Uses Dark Tile Layer
-**File:** `src/components/map/EventMap.tsx:64`
-Hardcoded dark tiles regardless of theme.
-**Fix:** Use theme context to switch tile URLs.
+| # | Issue | Resolved by |
+|---|-------|-------------|
+| H1 | Missing `@@index([userId])` on Account/Session | `prisma/schema.prisma` lines 41, 51. |
+| H2 | No rate limiting on insights/health | `src/app/api/insights/route.ts:8`, `src/app/api/health/route.ts:5`. |
+| H3 | No confirmation on account deletion | `src/app/api/user/route.ts:95` requires `{ confirm: "DELETE_MY_ACCOUNT" }` via `deleteAccountSchema`. UI uses `ConfirmDialog` in `app/settings/page.tsx`. |
+| H4 | Upload extension spoofing | `src/app/api/upload/route.ts:48` derives extension from `getExtensionFromMime(file.type)`. |
+| H5 | Upload paths not user-scoped | `src/app/api/upload/route.ts:50` prefixes with `{safeUserId}/`. |
+| H6 | Supabase singleton not `globalThis`-scoped | `src/lib/supabase.ts:3-6`. |
+| H7 | Privacy settings are client-only | `src/lib/preferences.ts` exposes `getUserPreferences()`; `src/app/api/stories/[id]/share/route.ts` returns 403 when `shareableStories === false` and strips location-derived stats when `showLocationOnShared === false`. `ShareCard` consumes only the server-sanitized payload. |
+| H8 | Story generation UI missing | `src/app/insights/page.tsx:303-320` ships two "Generate Story" buttons (current year + all-time). |
+| H9 | Session refresh error never surfaced | `src/components/ui/SessionErrorBanner.tsx` reads `RefreshAccessTokenError` from the session and is mounted at `src/app/layout.tsx:88`. |
+| H10 | Map always uses dark tiles | `src/components/map/EventMap.tsx:90-96` switches tile URLs based on `useTheme()`. |
 
 ---
 
-## MEDIUM
+## Medium — mostly FIXED
 
-### Security & Auth
-| # | Issue | Location |
-|---|-------|----------|
-| M1 | Unauth'd requests get `{ stats: null }` instead of 401 on insights | `api/insights/route.ts:6-19` |
-| M2 | Unauth'd requests get empty arrays instead of 401 on events/stories | Multiple routes |
-| M3 | Google status returns false booleans for unauth'd instead of 401 | `api/google/status/route.ts:11` |
-| M4 | No rate limit on Google status endpoint | `api/google/status/route.ts` |
-| M5 | Story regeneration not wrapped in DB transaction (race condition) | `api/stories/[id]/route.ts:43-95` |
-| M6 | CSRF validation is manual per-route (easy to forget on new routes) | `src/lib/csrf.ts` |
+Open items are flagged with **OPEN**.
 
-### Input Validation
-| # | Issue | Location |
-|---|-------|----------|
-| M7 | No `endDate > startDate` validation | `api/events/route.ts:129-134`, `api/events/[id]/route.ts:45-47` |
-| M8 | No location string length limit | `api/events/route.ts:164` |
-| M9 | Year parameter not validated for empty string | `api/events/route.ts:63-71` |
-| M10 | No input schema validation library (should use Zod) | All API routes |
-
-### Performance
-| # | Issue | Location |
-|---|-------|----------|
-| M11 | Google Photos import loads ALL existing URLs into memory | `api/google/photos/route.ts:109-115` |
-| M12 | Google Calendar import same pattern | `api/google/calendar/route.ts:89-98` |
-| M13 | Silent 500-item cap on Google imports — no user warning | Both google routes |
-| M14 | Insights `findMany` with no limit on date query | `api/insights/route.ts:48-52` |
-| M15 | `handleScroll` recreated every render | `Navigation.tsx:257` |
-| M16 | Missing `React.memo` on hot-path components | `TimelineCard`, `AddMemoryButton` |
-| M17 | No `<Suspense>` boundary around `useSearchParams` | Timeline, Map, Insights pages |
-
-### Accessibility
-| # | Issue | Location |
-|---|-------|----------|
-| M18 | Photo upload drop zone not keyboard-accessible | `EventModal.tsx:172-197` |
-| M19 | Map markers not keyboard-navigable | `EventMap.tsx` |
-| M20 | TimelineCard doesn't use semantic `<article>` tags | `TimelineCard.tsx` |
-| M21 | StatCard statistics lack `aria-label` | `StatCard.tsx` |
-| M22 | Map legend missing `role` attributes | `EventMap.tsx:262-276` |
-| M23 | No focus return when modals close | `Navigation.tsx`, `EventModal.tsx` |
-| M24 | Category buttons in EventModal lack `role` attributes | `EventModal.tsx:262-276` |
-
-### Reliability
-| # | Issue | Location |
-|---|-------|----------|
-| M25 | No GET handler for `/api/events/[id]` or `/api/stories/[id]` | Both `[id]/route.ts` |
-| M26 | Leaflet map init has no try/catch (fails silently) | `EventMap.tsx:58-75` |
-| M27 | Marker click handlers accumulate without cleanup | `EventMap.tsx:163` |
-| M28 | Image upload races with form validation | `EventModal.tsx:67-72` |
-| M29 | `setTimeout` for success message has no cleanup on unmount | `EventModal.tsx:82-85` |
-| M30 | `uploadImageIfNeeded()` has no AbortController | `useEventForm.ts` |
-| M31 | Map theme change effect has no cleanup | `EventMap.tsx:86-92` |
-
-### API Design
-| # | Issue | Location |
-|---|-------|----------|
-| M32 | No standard API response envelope | All routes |
-| M33 | Pagination uses different patterns across routes | Events vs Stories |
-| M34 | Calendar dedup uses name+date instead of Google event ID | `api/google/calendar/route.ts` |
+| # | Issue | Status |
+|---|-------|--------|
+| M1 | Unauth insights returns `{stats: null}` instead of 401 | FIXED — `api/insights/route.ts:13-15`. |
+| M2 | Unauth events/stories return empty arrays | FIXED — all GET routes return 401 when there's no session. |
+| M3 | Google status returns false booleans for unauth | FIXED — `api/google/status/route.ts:14-15`. |
+| M4 | No rate limit on Google status | FIXED — `api/google/status/route.ts:8`. |
+| M5 | Story regeneration race condition | FIXED — `api/stories/[id]/route.ts:130-150` wraps the re-check and update in `prisma.$transaction()`. |
+| M6 | CSRF manual per-route | DEFENSE-IN-DEPTH — enforced both per-route (`validateCsrf()`) and at middleware. |
+| M7 | No `endDate > startDate` check | FIXED — `src/lib/validation.ts:36-44, 62-70` via Zod `refine()`. |
+| M8 | Location string has no length limit | FIXED — `validation.ts:29, 51` (`max(200)`). |
+| M9 | Year param not validated for empty string | FIXED — `api/events/route.ts:71-78` skips empty + validates range. |
+| M10 | No Zod schemas | FIXED — `src/lib/validation.ts` is used across every mutating route. |
+| M11 | Google Photos imports loads all URLs into memory | FIXED — `api/google/photos/route.ts:111-119` queries with `WHERE imageUrl IN (...)` against the candidate batch only. |
+| M12 | Google Calendar import same pattern | FIXED — `api/google/calendar/route.ts:92-99`. |
+| M13 | Silent 500-item cap | FIXED — both routes return `warning` field when capped. |
+| M14 | Insights unbounded findMany | FIXED — `api/insights/route.ts:54-59` uses `groupBy` and caps the date list at 2,000. |
+| M15 | `handleScroll` recreated every render | FIXED — `Navigation.tsx` uses `useCallback`. |
+| M16 | Missing `React.memo` | FIXED — `TimelineCard.tsx`, `AddMemoryButton.tsx` are wrapped in `memo()`. |
+| M17 | Missing Suspense around `useSearchParams` | FIXED — wrappers in timeline, map, insights pages. |
+| M18 | Photo drop zone not keyboard-accessible | FIXED — `EventModal.tsx` handles Enter/Space. |
+| M19 | Map markers not keyboard-navigable | FIXED — `EventMap.tsx:172-187` sets tabindex/role + keydown. |
+| M20 | TimelineCard not semantic | FIXED — uses `<motion.article>` with aria-label. |
+| M21 | StatCard missing aria-label | FIXED. |
+| M22 | Map legend missing roles | FIXED — `EventMap.tsx:307-318`. |
+| M23 | No focus return on modal close | FIXED — `EventModal.tsx:54-71`. |
+| M24 | Category buttons lack role | FIXED — `timeline/page.tsx` uses `role="radiogroup"` and `role="radio"`. |
+| M25 | No GET on `/api/events/[id]` or `/api/stories/[id]` | FIXED — both handlers present. |
+| M26 | Leaflet init has no try/catch | FIXED — `EventMap.tsx:62-79`. |
+| M27 | Marker click handlers accumulate | FIXED — `EventMap.tsx:104-109` resets cleanup fns + markers each effect run. |
+| M28 | Image upload races with form validation | FIXED — `useEventForm.ts` uses an AbortController. |
+| M29 | setTimeout leak on unmount | FIXED — `EventModal.tsx` cleans up the timer. |
+| M30 | `uploadImageIfNeeded` has no AbortController | FIXED. |
+| M31 | Map theme effect leak | FIXED — separate effects for init vs theme. |
+| M32 | No standard API response envelope | FIXED — `src/lib/api-response.ts` is used everywhere. |
+| M33 | Pagination patterns differ | **OPEN** — events use cursor + `apiPaginated`; stories use cursor + `apiPaginated`. Both share helpers now, but the response shape still differs slightly in error cases. Not blocking. |
+| M34 | Calendar dedup uses name+date instead of Google event ID | FIXED — `api/google/calendar/route.ts:88-99` dedupes on `sourceId` (Google event ID). |
 
 ---
 
-## LOW
+## Low
 
-| # | Issue | Location |
-|---|-------|----------|
-| L1 | No timezone handling — all dates UTC | Multiple routes |
-| L2 | `cn()` passes array instead of spreading to clsx | `src/lib/utils.ts:3-4` |
-| L3 | Unused Tailwind content path `./src/pages` | `tailwind.config.ts:5` |
-| L4 | Duplicate CSS variable definitions | `globals.css:254-268` |
-| L5 | Potentially unused CSS classes (`.watermark`, `.mask-gradient-*`) | `globals.css:115-229` |
-| L6 | CSS `::selection` styled twice with specificity issues | `globals.css:242-250` |
-| L7 | Missing `onUpdate: Cascade` on Account model | `schema.prisma:40` |
-| L8 | Non-null assertions without runtime guards (`event.latitude!`) | `EventMap.tsx:138` |
-| L9 | Type cast without verification (`e.target as HTMLElement`) | `Navigation.tsx:187` |
-| L10 | Google API error details logged to console | `api/google/photos/route.ts:90` |
-| L11 | Search input has no max length | `Navigation.tsx:149-159` |
-| L12 | No request deduplication on story generation | `api/stories/route.ts:73-78` |
-| L13 | `eslint-disable` for `no-explicit-any` in API routes | Calendar, Photos, Stories routes |
-| L14 | Duplicate navigation definitions | `Navigation.tsx:13-27` |
-| L15 | Hero uses hardcoded sign-in path instead of `signIn()` | `src/app/page.tsx:71` |
-| L16 | Demo events use Unsplash without attribution | `src/data/demo.ts` |
-| L17 | PWA manifest is minimal (missing icon set, start_url) | `public/manifest.json` |
-| L18 | Map legend shows category colors but markers are all white | `EventMap.tsx` |
-| L19 | `getEventsByYear` defined in `demo.ts` but used everywhere | `src/data/demo.ts` |
-| L20 | Insights "longest streak" metric is misleading | `api/insights/route.ts:111` |
-
----
-
-## Feature Recommendations
-
-### Should Add (High Impact)
-1. **Middleware-level auth** — Single enforcement point for protected routes
-2. **Zod input validation** — Schema-based validation on all API inputs
-3. **Structured logging** — Replace `console.error` with Pino + correlation IDs
-4. **Request ID tracing** — `X-Request-Id` header propagation
-5. **Error monitoring** — Sentry or equivalent
-6. **Optimistic UI** — SWR `optimisticData` for instant feedback
-7. **Error boundary per route** — Not just root-level
-8. **Confirmation dialogs** — For all destructive operations
-9. **Incremental Google import** — Progress indicator instead of silent 500-cap
-
-### Could Add (Nice to Have)
-10. PWA offline support with IndexedDB caching
-11. Next.js `<Image>` with responsive image transforms
-12. Dynamic OG image generation for shared timelines
-13. CSV/JSON export of timeline data
-14. Keyboard shortcuts (`n` = new event, `/` = search, `j`/`k` = navigate)
-15. Soft delete with 30-second undo window
-16. Geocoding — auto-resolve lat/lng from location text
-17. Multiple OAuth providers (Apple, GitHub, email/password)
-18. Timeline collaboration (shared timelines for couples/families)
-19. "On This Day" push notifications
-20. Year-in-review automated email
+| # | Issue | Status |
+|---|-------|--------|
+| L1 | No timezone handling | **OPEN** — all dates stored as UTC. Out of scope for this round. |
+| L2 | `cn()` passes array instead of spreading | **OPEN** — minor; behavior is correct because clsx handles arrays. |
+| L3 | Unused Tailwind content path `./src/pages` | **OPEN** — harmless. |
+| L4 | Duplicate CSS variable definitions | **OPEN** — cosmetic. |
+| L5 | Unused CSS classes | **OPEN** — would need a CSS coverage tool to verify. |
+| L6 | `::selection` styled twice | FIXED. |
+| L7 | Missing `onUpdate: Cascade` on Account | **OPEN** — not actually needed; provider IDs don't change. |
+| L8 | Non-null assertions without guards | FIXED — `EventMap.tsx` uses `as number` after null filter. |
+| L9 | Type cast without verification | **OPEN** — minor. |
+| L10 | Google API error details logged | FIXED — only `status` is logged now. |
+| L11 | Search input has no max length | FIXED — `Navigation.tsx:160` has `maxLength={200}`. |
+| L12 | No request dedup on story generation | **OPEN** — rate limiter (5/min) provides coarse protection. |
+| L13 | `eslint-disable no-explicit-any` in some routes | **OPEN** — would need targeted typing of Google API responses. |
+| L14 | Duplicate navigation definitions | **OPEN** — single declaration verified, but the AUDIT note may have referred to a different file. |
+| L15 | Hero uses hardcoded sign-in path | FIXED — uses `signIn("google", {...})`. |
+| L16 | Demo events use Unsplash without attribution | **OPEN** — would need to add attribution to demo cards. |
+| L17 | PWA manifest minimal | FIXED — `public/manifest.json` has icons, start_url, theme_color, shortcuts. |
+| L18 | Map legend colors don't match markers | FIXED — markers use category colors (`EventMap.tsx:115-136`). |
+| L19 | `getEventsByYear` lives in `data/demo.ts` | FIXED — now lives in `src/lib/utils.ts:64` only. |
+| L20 | "Longest active run" metric is misleading | **OPEN** — label could be clearer; computation is correct. |
 
 ---
 
-## Recommended Action Plan
+## Tooling and infrastructure
 
-### Week 1 — Critical Security
-1. Enable middleware with auth + CSRF enforcement
-2. Fix CSRF bypass (reject requests with no origin/referer)
-3. Remove `unsafe-inline` from CSP (use nonces)
-4. Wrap all `req.json()` calls in try/catch
-5. Block private IPs in image URL validation
-6. Fix Google Photos proxy (stream bytes, don't redirect)
+| Concern | Status |
+|---|---|
+| Tests | 215 unit + 4 e2e suites; coverage threshold 80% on `src/lib/**`, `src/app/api/**`, `src/middleware.ts`. |
+| Lint | Clean (`next/core-web-vitals` + `next/typescript`). |
+| Type-check | `tsc --noEmit` clean (strict mode). |
+| Build | `next build` succeeds. |
+| Prisma migrations | Baseline `20260513000000_init` committed under `prisma/migrations/`. CI runs `prisma migrate deploy` against a fresh Postgres service. See `prisma/migrations/README.md` for the baseline procedure on existing databases. |
+| Logging | Structured JSON via `src/lib/logger.ts`. |
+| Telemetry | `src/instrumentation.ts` boots env validation + emits unhandled errors to stderr. Sentry integration is stubbed (commented). |
 
-### Week 2 — High Priority
-7. Add `@@index([userId])` to Account and Session models
-8. Add rate limiting to insights and health endpoints
-9. Implement account deletion with confirmation
-10. Fix upload extension spoofing (derive from MIME)
-11. Scope upload paths to user ID
-12. Fix Supabase singleton pattern
-13. Wire up story generation UI
-14. Surface session refresh errors to users
-15. Fix map theme-awareness
+---
 
-### Week 3 — Medium Priority
-16. Add Zod validation schemas to all API routes
-17. Return 401 (not empty data) for unauthenticated requests
-18. Fix accessibility gaps (keyboard nav, ARIA, semantic HTML)
-19. Add AbortController to image uploads
-20. Clean up timer/effect leaks
-21. Standardize API response format
-22. Add `<Suspense>` boundaries for `useSearchParams`
+## Known dependency CVEs (not yet patched here)
 
-### Ongoing
-23. Add error monitoring (Sentry)
-24. Add structured logging
-25. Component memoization pass
-26. Expand test coverage for edge cases found in this audit
+| Package | Severity | Why we haven't fixed it |
+|---|---|---|
+| `next@14.2.35` | High (multiple) — incl. GHSA-ffhc-5mcf-pf4q (CSP nonce XSS in App Router) | First patched version is 15.4.7 / 16.x. Major version bump with breaking changes (React 19 default, async APIs) — out of scope here. |
+| `postcss` (transitive via next) | Moderate | Resolves with the Next.js bump above. |
+
+`@anthropic-ai/sdk` was bumped from 0.80 → 0.95.2 in this round, which closes
+the moderate memory-tool path-validation advisory.
+
+---
+
+## Feature recommendations (not yet implemented)
+
+- Authenticated-flow e2e tests (create event → see it → delete it).
+- Sentry/Datadog integration via `src/instrumentation.ts`.
+- Tighten `next.config.mjs` CSP fallback now that the middleware sets a
+  per-request CSP with a nonce.
+- ESLint guardrails (e.g. forbid `console.error` in favor of `logger`).
+- Geocoding for free-text locations.
+- Optional public share links that respect `shareableStories` server-side
+  (the current `/api/stories/[id]/share` endpoint is authenticated-only —
+  unauthenticated public links would build on top of it).

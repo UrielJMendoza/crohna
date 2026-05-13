@@ -37,6 +37,10 @@ const nextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=(self)",
           },
+          // Content-Security-Policy is set per-request from src/middleware.ts
+          // so we can attach a fresh nonce and avoid script-src 'unsafe-inline'.
+          // This fallback policy applies to routes that bypass the middleware
+          // (e.g. /api/auth/*, /api/health) where responses are JSON.
           {
             key: "Content-Security-Policy",
             value: [
@@ -47,6 +51,9 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://fonts.googleapis.com https://fonts.gstatic.com",
               "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "object-src 'none'",
+              "form-action 'self'",
             ].join("; ") + ";",
           },
         ],

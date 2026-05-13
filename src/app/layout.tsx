@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import "./globals.css";
 import Navigation from "@/components/ui/Navigation";
@@ -27,7 +28,13 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXTAUTH_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Crohna — Your Life, Beautifully Mapped",
   description:
     "Crohna transforms your memories into a stunning visual timeline. A premium digital life story.",
@@ -50,6 +57,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = headers().get("x-nonce") || undefined;
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
@@ -59,13 +67,14 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Crohna" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
-        {/* Google Fonts: EB Garamond for editorial serif headlines */}
+        {/* eslint-disable @next/next/no-page-custom-font -- App Router doesn't use _document; preconnect-then-link is the documented pattern. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        {/* eslint-enable @next/next/no-page-custom-font */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts -- Must run before paint to prevent theme flash */}
-        <script src="/theme-init.js" />
+        <script src="/theme-init.js" nonce={nonce} />
       </head>
       <body className="font-body antialiased bg-chrono-bg text-chrono-text">
         <SessionProvider>

@@ -1,8 +1,11 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getPrisma } from "@/lib/prisma";
+import { createRateLimiter } from "@/lib/rate-limit";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { logger } from "@/lib/logger";
+
+const checkStatusLimit = createRateLimiter("google-status", 30, 60_000);
 
 // GET /api/google/status — check which Google services have imported data
 export async function GET() {
@@ -10,6 +13,10 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return apiError("Unauthorized", 401);
+    }
+
+    if (!(await checkStatusLimit(session.user.email)).allowed) {
+      return apiError("Too many requests. Please wait a minute.", 429);
     }
 
     const prisma = getPrisma();

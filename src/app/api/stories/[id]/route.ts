@@ -11,6 +11,51 @@ import { logger } from "@/lib/logger";
 
 const checkStoryLimit = createRateLimiter("stories", 5, 60_000);
 
+// GET /api/stories/[id] — get a single story by id
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return apiError("Unauthorized", 401);
+    }
+
+    const prisma = getPrisma();
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+    if (!user) {
+      return apiError("User not found", 404);
+    }
+
+    const { id } = await params;
+
+    const story = await prisma.aIStory.findFirst({
+      where: { id, userId: user.id },
+    });
+    if (!story) {
+      return apiError("Story not found", 404);
+    }
+
+    return apiSuccess({
+      story: {
+        id: story.id,
+        title: story.title,
+        period: story.period,
+        year: story.year ?? undefined,
+        summary: story.summary,
+        highlights: story.highlights,
+        stats: (story.stats as Record<string, string | number>) ?? undefined,
+      },
+    });
+  } catch (error) {
+    logger.error("GET /api/stories/[id] error", { error: String(error) });
+    return apiError("Failed to fetch story", 500);
+  }
+}
+
 // PUT /api/stories/[id] — regenerate a story
 export async function PUT(
   req: NextRequest,
@@ -57,7 +102,7 @@ export async function PUT(
     const events = await prisma.event.findMany({
       where: whereClause,
       orderBy: { date: "asc" },
-      take: 10_000,
+      take: 500,
     });
 
     const locations = Array.from(new Set(events.map((e) => e.location).filter(Boolean)));

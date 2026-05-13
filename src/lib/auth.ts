@@ -5,7 +5,6 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { getPrisma } from "@/lib/prisma";
 import { validateEnv } from "@/lib/env";
 
-// Validate env at runtime when this module is first used (not at import/build time)
 validateEnv();
 
 const prisma = getPrisma();
@@ -50,6 +49,11 @@ export const authOptions: NextAuthOptions = {
           prompt: "consent",
         },
       },
+      // Google verifies the email before issuing the OAuth token, and Google
+      // is our only auth provider, so linking by email is safe. Without this,
+      // any orphan User row (e.g. created by a previous buggy signIn callback)
+      // causes NextAuth to throw AccountNotLinkedError on first OAuth login.
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
   pages: {
@@ -60,24 +64,6 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async signIn({ account, profile }) {
-      if (account?.provider === "google" && profile?.email) {
-        const existingUser = await prisma.user.findUnique({
-          where: { email: profile.email },
-        });
-        if (!existingUser) {
-          await prisma.user.create({
-            data: {
-              email: profile.email,
-              name: profile.name ?? null,
-              image: (profile as Record<string, unknown>).picture as string ?? null,
-              emailVerified: new Date(),
-            },
-          });
-        }
-      }
-      return true;
-    },
     async session({ session, token }) {
       if (session.user) {
         (session.user as Record<string, unknown>).id = token.sub;
@@ -88,23 +74,27 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async jwt({ token, account, user }) {
-      // On initial sign-in, store tokens and expiry
+      // On initial sign-in (account is set), store tokens and expiry.
+      // Google returns expires_at as a unix-seconds timestamp; if it's missing
+      // (rare, but possible), default to one hour from now so we don't end up
+      // with accessTokenExpires=0 and try to refresh on every single request.
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
-        token.accessTokenExpires = (account.expires_at ?? 0) * 1000;
+        token.accessTokenExpires = account.expires_at
+          ? account.expires_at * 1000
+          : Date.now() + 60 * 60 * 1000;
       }
       if (user) {
         token.sub = user.id;
       }
 
-      // Return token if it hasn't expired yet (refresh 5 min early to avoid edge-case failures)
+      const expiresAt = (token.accessTokenExpires as number | undefined) ?? 0;
       const FIVE_MINUTES = 5 * 60 * 1000;
-      if (Date.now() + FIVE_MINUTES < (token.accessTokenExpires as number)) {
+      if (Date.now() + FIVE_MINUTES < expiresAt) {
         return token;
       }
 
-      // Token has expired — refresh it
       if (token.refreshToken) {
         try {
           return await refreshAccessToken(token);

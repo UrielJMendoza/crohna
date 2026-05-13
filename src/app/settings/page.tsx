@@ -23,48 +23,50 @@ export default function SettingsPage() {
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [accountDeleting, setAccountDeleting] = useState(false);
 
-  // Privacy preferences (server-backed with localStorage cache)
+  // Privacy preferences — server is the only source of truth. We never cache
+  // in localStorage because that would let the UI lie about what the server
+  // will actually enforce on the next share request.
   const [privacySettings, setPrivacySettings] = useState({
     shareableStories: true,
     showLocationOnShared: true,
   });
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
 
-  // Load from localStorage immediately, then sync from server
   useEffect(() => {
-    const stored = localStorage.getItem("chrono-privacy");
-    if (stored) {
-      try { setPrivacySettings(JSON.parse(stored)); } catch { /* ignore */ }
-    }
     if (!session) return;
-    fetch("/api/user")
+    const controller = new AbortController();
+    fetch("/api/user", { signal: controller.signal })
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         const prefs = data?.user?.preferences;
         if (prefs && typeof prefs === "object") {
-          const merged = {
+          setPrivacySettings({
             shareableStories: prefs.shareableStories ?? true,
             showLocationOnShared: prefs.showLocationOnShared ?? true,
-          };
-          setPrivacySettings(merged);
-          localStorage.setItem("chrono-privacy", JSON.stringify(merged));
+          });
         }
+        setPrefsLoaded(true);
       })
-      .catch(() => {});
+      .catch(() => { setPrefsLoaded(true); });
+    return () => controller.abort();
   }, [session]);
 
-  // Save to both localStorage and server
-  const updatePrivacy = (update: Partial<typeof privacySettings>) => {
-    setPrivacySettings((prev) => {
-      const next = { ...prev, ...update };
-      localStorage.setItem("chrono-privacy", JSON.stringify(next));
-      // Fire-and-forget save to server
-      fetch("/api/user", {
+  const updatePrivacy = async (update: Partial<typeof privacySettings>) => {
+    const previous = privacySettings;
+    const next = { ...previous, ...update };
+    setPrivacySettings(next);
+    try {
+      const res = await fetch("/api/user", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ preferences: next }),
-      }).catch(() => {});
-      return next;
-    });
+      });
+      if (!res.ok) throw new Error("save failed");
+    } catch {
+      // Roll back on failure so the UI never disagrees with the server.
+      setPrivacySettings(previous);
+      toast.error("Failed to save privacy settings. Please try again.");
+    }
   };
 
   useEffect(() => {
@@ -433,7 +435,8 @@ export default function SettingsPage() {
                 </div>
                 <button
                   onClick={() => updatePrivacy({ shareableStories: !privacySettings.shareableStories })}
-                  className="relative w-11 h-6 rounded-full border border-[var(--line-strong)] transition-colors flex-shrink-0"
+                  disabled={!prefsLoaded}
+                  className="relative w-11 h-6 rounded-full border border-[var(--line-strong)] transition-colors flex-shrink-0 disabled:opacity-50"
                   style={{ background: privacySettings.shareableStories ? "var(--chrono-accent)" : "var(--card-bg)" }}
                   role="switch"
                   aria-checked={privacySettings.shareableStories}
@@ -454,7 +457,8 @@ export default function SettingsPage() {
                 </div>
                 <button
                   onClick={() => updatePrivacy({ showLocationOnShared: !privacySettings.showLocationOnShared })}
-                  className="relative w-11 h-6 rounded-full border border-[var(--line-strong)] transition-colors flex-shrink-0"
+                  disabled={!prefsLoaded}
+                  className="relative w-11 h-6 rounded-full border border-[var(--line-strong)] transition-colors flex-shrink-0 disabled:opacity-50"
                   style={{ background: privacySettings.showLocationOnShared ? "var(--chrono-accent)" : "var(--card-bg)" }}
                   role="switch"
                   aria-checked={privacySettings.showLocationOnShared}

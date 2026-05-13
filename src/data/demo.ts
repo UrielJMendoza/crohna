@@ -327,5 +327,3 @@ export const insightStats = {
   ],
 };
 
-// Re-export from utils for backwards compatibility
-export { getEventsByYear } from "@/lib/utils";

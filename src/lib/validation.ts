@@ -84,14 +84,24 @@ export const createStorySchema = z.object({
 
 // --- User schemas ---
 
+// Privacy preferences are enforced server-side (see lib/preferences.ts).
+// Additional opaque keys are allowed for forward compatibility, but the
+// privacy-related ones are typed so callers can rely on their shape.
+export const userPreferencesSchema = z
+  .object({
+    shareableStories: z.boolean().optional(),
+    showLocationOnShared: z.boolean().optional(),
+  })
+  .catchall(z.unknown())
+  .refine((val) => JSON.stringify(val).length <= 10_000, {
+    message: "Preferences too large (max 10KB)",
+  });
+
+export type UserPreferences = z.infer<typeof userPreferencesSchema>;
+
 export const updateUserSchema = z.object({
   name: z.string().max(200, "Name must be under 200 characters").optional(),
-  preferences: z
-    .record(z.string(), z.unknown())
-    .refine((val) => JSON.stringify(val).length <= 10_000, {
-      message: "Preferences too large (max 10KB)",
-    })
-    .optional(),
+  preferences: userPreferencesSchema.optional(),
 });
 
 export const deleteAccountSchema = z.object({

@@ -14,7 +14,8 @@ async function main() {
       name: "Demo User",
       preferences: {
         theme: "dark",
-        privacy: { showMap: true, showTimeline: true },
+        shareableStories: true,
+        showLocationOnShared: true,
       },
     },
   });

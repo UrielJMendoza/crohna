@@ -7,20 +7,11 @@ import { CATEGORIES } from "@/lib/constants";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useEventForm } from "@/hooks/useEventForm";
 
-const chapters = [
-  "College Years",
-  "Career Start",
-  "Travel Adventures",
-  "Personal Growth",
-  "Major Moves",
-  "Relationships",
-];
-
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (event: Partial<TimelineEvent> & { chapter?: string }) => void;
-  event?: TimelineEvent & { chapter?: string };
+  onSave: (event: Partial<TimelineEvent>) => void;
+  event?: TimelineEvent;
   onDelete?: (id: string) => void;
 }
 
@@ -60,7 +51,6 @@ export default function EventModal({ isOpen, onClose, onSave, event, onDelete }:
         description: event?.description || "",
         category: event?.category || "",
         imageUrl: event?.imageUrl || "",
-        chapter: event?.chapter || "",
       });
       setShowSuccess(false);
     } else {
@@ -90,7 +80,7 @@ export default function EventModal({ isOpen, onClose, onSave, event, onDelete }:
     onSave({
       ...event,
       ...form,
-      imageUrl: finalImageUrl || "",
+      imageUrl: finalImageUrl || undefined,
       id: event?.id || `evt-${Date.now()}`,
     });
 
@@ -299,26 +289,6 @@ export default function EventModal({ isOpen, onClose, onSave, event, onDelete }:
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs text-chrono-muted uppercase tracking-wider block mb-2">
-                  Life Chapter <span className="text-chrono-muted/50">(optional)</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {chapters.map((ch) => (
-                    <button
-                      key={ch}
-                      onClick={() => toggleField("chapter", ch)}
-                      className={`px-3 py-1.5 text-xs rounded-full transition-all ${
-                        form.chapter === ch
-                          ? "bg-[var(--muted)] border border-[var(--line-hover)] text-chrono-text"
-                          : "bg-[var(--card-bg)] border border-[var(--line-strong)] text-chrono-muted hover:border-[var(--line-hover)]"
-                      }`}
-                    >
-                      {ch}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
 
             <div className="p-6 border-t border-[var(--line-strong)] flex items-center justify-between">

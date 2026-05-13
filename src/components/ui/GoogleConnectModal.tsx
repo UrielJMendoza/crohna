@@ -83,11 +83,32 @@ export default function GoogleConnectModal({
     }
   };
 
-  const handleDisconnect = () => {
-    onDisconnect();
-    setState("idle");
-    setImportCount(null);
-    toast.success(`${service} disconnected`);
+  const handleDisconnect = async () => {
+    setState("loading");
+    setErrorMessage("");
+    const source = service === "Google Calendar" ? "calendar" : "photos";
+    try {
+      const res = await fetch("/api/google/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setState("error");
+        setErrorMessage(data.error || "Failed to disconnect.");
+        toast.error(data.error || "Failed to disconnect");
+        return;
+      }
+      onDisconnect();
+      setState("idle");
+      setImportCount(null);
+      toast.success(`${service} disconnected — ${data.deleted ?? 0} items removed`);
+    } catch {
+      setState("error");
+      setErrorMessage("Failed to disconnect. Please try again.");
+      toast.error("Failed to disconnect");
+    }
   };
 
   const successMessage = importCount !== null

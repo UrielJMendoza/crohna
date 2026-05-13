@@ -2,10 +2,11 @@
 
 import { Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { TimelineEvent, getEventsByYear, demoYearSummaries } from "@/data/demo";
+import { TimelineEvent, demoYearSummaries } from "@/data/demo";
+import { getEventsByYear } from "@/lib/utils";
 import YearSection from "@/components/timeline/YearSection";
 import EventModal from "@/components/events/EventModal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -203,7 +204,8 @@ function TimelinePage() {
   const allYears = Object.keys(getEventsByYear(events));
   const years = Object.keys(eventsByYear);
 
-  const handleScroll = useCallback(() => {
+  const rafRef = useRef<number | null>(null);
+  const updateActiveYear = useCallback(() => {
     const yearElements = document.querySelectorAll("[data-year]");
     let current = "";
     yearElements.forEach((el) => {
@@ -213,9 +215,16 @@ function TimelinePage() {
   }, []);
 
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    const onScroll = () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(updateActiveYear);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [updateActiveYear]);
 
   const handleCreateEvent = useCallback(async (eventData: Partial<TimelineEvent>) => {
     try {

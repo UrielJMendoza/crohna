@@ -11,8 +11,6 @@ export function getSupabase(): SupabaseClient {
     throw new Error("Supabase environment variables are not configured");
   }
   const client = createClient(url, key);
-  if (process.env.NODE_ENV !== "production") {
-    globalForSupabase.supabase = client;
-  }
+  globalForSupabase.supabase = client;
   return client;
 }

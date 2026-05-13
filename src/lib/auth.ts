@@ -65,11 +65,11 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async session({ session, token }) {
-      if (session.user) {
-        (session.user as Record<string, unknown>).id = token.sub;
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
       }
       if (token.error) {
-        (session as unknown as Record<string, unknown>).error = token.error;
+        session.error = token.error as string;
       }
       return session;
     },

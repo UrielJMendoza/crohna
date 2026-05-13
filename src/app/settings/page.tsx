@@ -22,6 +22,7 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [accountDeleting, setAccountDeleting] = useState(false);
+  const [accountConfirmText, setAccountConfirmText] = useState("");
 
   // Privacy preferences (server-backed with localStorage cache)
   const [privacySettings, setPrivacySettings] = useState({
@@ -222,19 +223,21 @@ export default function SettingsPage() {
       const res = await fetch("/api/user", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirm: "DELETE_MY_ACCOUNT" }),
+        body: JSON.stringify({ confirm: accountConfirmText.trim() }),
       });
       if (res.ok) {
         toast.success("Account deleted. Goodbye.");
         signOut({ callbackUrl: "/" });
       } else {
-        toast.error("Failed to delete account.");
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Failed to delete account.");
       }
     } catch {
       toast.error("Failed to delete account. Please try again.");
     } finally {
       setAccountDeleting(false);
       setAccountDialogOpen(false);
+      setAccountConfirmText("");
     }
   };
 
@@ -563,13 +566,19 @@ export default function SettingsPage() {
 
       <ConfirmDialog
         isOpen={accountDialogOpen}
-        onClose={() => setAccountDialogOpen(false)}
+        onClose={() => { setAccountDialogOpen(false); setAccountConfirmText(""); }}
         onConfirm={handleDeleteAccount}
         title="Delete your account?"
-        description="This will permanently delete your account and all associated data including events, stories, and preferences. This action cannot be undone."
+        description={`This will permanently delete your account and all associated data including events, stories, and preferences. This action cannot be undone. Type your email (${session.user?.email}) to confirm.`}
         confirmLabel="Delete Account"
         destructive
         loading={accountDeleting}
+        confirmDisabled={accountConfirmText.trim() !== (session.user?.email ?? "")}
+        confirmInput={{
+          value: accountConfirmText,
+          onChange: setAccountConfirmText,
+          placeholder: session.user?.email || "your-email@example.com",
+        }}
       />
     </div>
   );

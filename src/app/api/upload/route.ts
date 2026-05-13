@@ -18,11 +18,11 @@ export async function POST(req: NextRequest) {
     if (csrfError) return csrfError;
 
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return apiError("Unauthorized", 401);
     }
 
-    const userId = session.user.email || "unknown";
+    const userId = session.user.id;
     if (!(await checkUploadLimit(userId)).allowed) {
       return apiError("Too many uploads. Please wait a minute and try again.", 429);
     }
@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
 
     // Derive extension from validated MIME type, not user-supplied filename
     const ext = getExtensionFromMime(file.type);
-    const safeUserId = (session.user.email || "unknown").replace(/[^a-zA-Z0-9@._-]/g, "_");
-    const filename = `${safeUserId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    // userId is a CUID (alphanumeric) so it's already path-safe.
+    const filename = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
 

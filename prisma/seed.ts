@@ -39,7 +39,7 @@ async function main() {
       latitude: 42.3736,
       longitude: -71.1097,
       description: "Moved into my first apartment with roommates.",
-      category: "home",
+      category: "life",
     },
     {
       title: "Summer Road Trip",
@@ -58,7 +58,7 @@ async function main() {
       latitude: 42.3505,
       longitude: -71.1054,
       description: "Four years of hard work. Family flew in for the ceremony.",
-      category: "milestone",
+      category: "achievement",
     },
     {
       title: "Started First Job",
@@ -76,7 +76,7 @@ async function main() {
       latitude: 40.7712,
       longitude: -73.9743,
       description: "Finished my first marathon in Central Park. 4:12:33.",
-      category: "health",
+      category: "achievement",
     },
   ];
 

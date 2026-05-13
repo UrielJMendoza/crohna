@@ -12,13 +12,13 @@ import { logger } from "@/lib/logger";
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return apiError("Unauthorized", 401);
     }
 
     const prisma = getPrisma();
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
     });
 
     if (!user) {
@@ -47,7 +47,7 @@ export async function PUT(req: NextRequest) {
     if (csrfError) return csrfError;
 
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return apiError("Unauthorized", 401);
     }
 
@@ -58,7 +58,7 @@ export async function PUT(req: NextRequest) {
 
     const prisma = getPrisma();
     const user = await prisma.user.update({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       data: {
         ...(name !== undefined && { name: name?.trim() || null }),
         ...(preferences !== undefined && { preferences: preferences as Prisma.InputJsonValue }),
@@ -87,17 +87,22 @@ export async function DELETE(req: NextRequest) {
     if (csrfError) return csrfError;
 
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id || !session.user.email) {
       return apiError("Unauthorized", 401);
     }
 
     // Require explicit confirmation to prevent accidental deletion
-    const { error: validationError } = await parseBody(req, deleteAccountSchema);
+    const { data: confirmBody, error: validationError } = await parseBody(req, deleteAccountSchema);
     if (validationError) return validationError;
+
+    // Confirmation must match the user's email exactly (GitHub-style friction).
+    if (confirmBody.confirm !== session.user.email) {
+      return apiError("Confirmation does not match your email address.", 400);
+    }
 
     const prisma = getPrisma();
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
     });
 
     if (!user) {

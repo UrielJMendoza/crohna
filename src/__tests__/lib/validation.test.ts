@@ -164,12 +164,11 @@ describe("updateEventSchema", () => {
 });
 
 describe("deleteAccountSchema", () => {
-  it("requires exact confirmation string", () => {
-    expect(deleteAccountSchema.safeParse({ confirm: "DELETE_MY_ACCOUNT" }).success).toBe(true);
+  it("accepts any non-empty confirmation string (email match enforced by handler)", () => {
+    expect(deleteAccountSchema.safeParse({ confirm: "user@example.com" }).success).toBe(true);
   });
 
-  it("rejects wrong confirmation", () => {
-    expect(deleteAccountSchema.safeParse({ confirm: "delete" }).success).toBe(false);
+  it("rejects missing or empty confirmation", () => {
     expect(deleteAccountSchema.safeParse({ confirm: "" }).success).toBe(false);
     expect(deleteAccountSchema.safeParse({}).success).toBe(false);
   });

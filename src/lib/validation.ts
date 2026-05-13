@@ -94,10 +94,11 @@ export const updateUserSchema = z.object({
     .optional(),
 });
 
+// The confirmation must equal the requesting user's email — the route handler
+// checks `confirm === session.user.email` after this passes. Schema-level we
+// only require a non-empty string.
 export const deleteAccountSchema = z.object({
-  confirm: z.string().refine((val) => val === "DELETE_MY_ACCOUNT", {
-    message: 'Confirmation required. Send { "confirm": "DELETE_MY_ACCOUNT" } to proceed.',
-  }),
+  confirm: z.string().min(1, "Confirmation required: type your email to confirm account deletion."),
 });
 
 // --- Helper: parse request body with Zod ---

@@ -54,6 +54,21 @@ describe("Middleware — Matcher excludes public routes", () => {
     expect(matchesMiddleware("/api/authentication")).toBe(true);
     expect(matchesMiddleware("/api/healthy")).toBe(true);
   });
+
+  it("matches page routes for nonce-based CSP", () => {
+    expect(matchesMiddleware("/")).toBe(true);
+    expect(matchesMiddleware("/timeline")).toBe(true);
+    expect(matchesMiddleware("/map")).toBe(true);
+    expect(matchesMiddleware("/insights")).toBe(true);
+    expect(matchesMiddleware("/settings")).toBe(true);
+  });
+
+  it("does not match static assets", () => {
+    expect(matchesMiddleware("/favicon.ico")).toBe(false);
+    expect(matchesMiddleware("/manifest.json")).toBe(false);
+    expect(matchesMiddleware("/theme-init.js")).toBe(false);
+    expect(matchesMiddleware("/icon-192.png")).toBe(false);
+  });
 });
 
 describe("Middleware — CSRF Enforcement", () => {

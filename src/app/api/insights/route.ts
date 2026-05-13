@@ -10,17 +10,17 @@ const checkInsightsLimit = createRateLimiter("insights", 20, 60_000);
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return apiError("Unauthorized", 401);
     }
 
-    if (!(await checkInsightsLimit(session.user.email)).allowed) {
+    if (!(await checkInsightsLimit(session.user.id)).allowed) {
       return apiError("Too many requests. Please wait a minute.", 429);
     }
 
     const prisma = getPrisma();
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
     });
 
     if (!user) {

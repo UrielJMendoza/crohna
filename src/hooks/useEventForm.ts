@@ -9,7 +9,6 @@ export interface EventFormData {
   category: string;
   description: string;
   imageUrl: string;
-  chapter: string;
 }
 
 const EMPTY_FORM: EventFormData = {
@@ -19,7 +18,6 @@ const EMPTY_FORM: EventFormData = {
   category: "",
   description: "",
   imageUrl: "",
-  chapter: "",
 };
 
 interface UseEventFormOptions {

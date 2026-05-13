@@ -87,6 +87,10 @@ export default function EventMap({ events }: EventMapProps) {
         leafletMap.current = null;
       }
     };
+    // `theme` is intentionally excluded — the tile URL is swapped by the
+    // separate effect below when the theme changes. Re-running this init
+    // effect would tear down the map on every theme toggle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Swap tile layer when theme changes

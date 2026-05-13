@@ -1,5 +1,8 @@
 "use client";
 
+/* eslint-disable jsx-a11y/alt-text -- `alt` is required by next/image's prop
+   types and is forwarded through props; the rule cannot see through spread. */
+
 import Image, { type ImageProps } from "next/image";
 import { useEffect, useRef, useState } from "react";
 
@@ -35,6 +38,8 @@ export function FadeImage({ className, fadeDelay = 0, ...props }: FadeImageProps
     return () => observer.disconnect();
   }, [fadeDelay]);
 
+  // alt is a required prop of next/image and is spread from props; eslint
+  // can't see through the spread.
   return (
     <div ref={ref} className="relative h-full w-full">
       <Image

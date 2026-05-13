@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { mockPrisma } from "../setup";
 import { NextRequest } from "next/server";
 
-const mockSession = { user: { email: "test@example.com" } };
+const mockSession = { user: { id: "user-1", email: "test@example.com" } };
 const mockUser = { id: "user-1", email: "test@example.com" };
 
 function makeRequest(url: string, options?: Omit<RequestInit, "signal"> & { signal?: AbortSignal }) {

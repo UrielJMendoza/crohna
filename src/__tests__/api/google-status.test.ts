@@ -3,7 +3,7 @@ import { GET } from "@/app/api/google/status/route";
 import { getServerSession } from "next-auth";
 import { mockPrisma } from "../setup";
 
-const mockSession = { user: { email: "test@example.com" } };
+const mockSession = { user: { id: "user-1", email: "test@example.com" } };
 const mockUser = { id: "user-1", email: "test@example.com" };
 
 beforeEach(() => {

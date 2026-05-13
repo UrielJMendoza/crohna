@@ -24,12 +24,12 @@ export async function GET(req: NextRequest) {
     if (csrfError) return csrfError;
 
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return apiError("Unauthorized", 401);
     }
 
     // Rate limit
-    if (!(await checkProxyLimit(session.user.email)).allowed) {
+    if (!(await checkProxyLimit(session.user.id)).allowed) {
       return apiError("Too many requests. Please wait a minute.", 429);
     }
 
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     // Authorization: verify this photo belongs to the requesting user
     const prisma = getPrisma();
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
     });
     if (!user) {
       return apiError("Unauthorized", 401);

@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { mockPrisma } from "../setup";
 import { NextRequest } from "next/server";
 
-const mockSession = { user: { email: "test@example.com" } };
+const mockSession = { user: { id: "user-1", email: "test@example.com" } };
 const mockUser = { id: "user-1", email: "test@example.com", name: "Test" };
 
 function makeRequest(body: unknown) {
@@ -26,7 +26,7 @@ describe("DELETE /api/user — Account Deletion", () => {
   it("returns 401 for unauthenticated user", async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
 
-    const req = makeRequest({ confirm: "DELETE_MY_ACCOUNT" });
+    const req = makeRequest({ confirm: "test@example.com" });
     const res = await DELETE(req);
 
     expect(res.status).toBe(401);
@@ -42,17 +42,19 @@ describe("DELETE /api/user — Account Deletion", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects wrong confirmation string", async () => {
+  it("rejects confirmation that does not match the user's email", async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     mockPrisma.user.findUnique.mockResolvedValue(mockUser);
 
-    const req = makeRequest({ confirm: "delete my account" });
+    const req = makeRequest({ confirm: "DELETE_MY_ACCOUNT" });
     const res = await DELETE(req);
 
     expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toContain("Confirmation does not match");
   });
 
-  it("deletes account with correct confirmation", async () => {
+  it("deletes account when confirmation matches the user's email", async () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     mockPrisma.user.findUnique.mockResolvedValue(mockUser);
     // The DELETE handler passes an array to $transaction (not a function)
@@ -60,7 +62,7 @@ describe("DELETE /api/user — Account Deletion", () => {
       { count: 0 }, { count: 5 }, { count: 0 }, { count: 1 }, { id: "user-1" },
     ]);
 
-    const req = makeRequest({ confirm: "DELETE_MY_ACCOUNT" });
+    const req = makeRequest({ confirm: "test@example.com" });
     const res = await DELETE(req);
     const data = await res.json();
 
@@ -73,7 +75,7 @@ describe("DELETE /api/user — Account Deletion", () => {
     vi.mocked(getServerSession).mockResolvedValue(mockSession);
     mockPrisma.user.findUnique.mockResolvedValue(null);
 
-    const req = makeRequest({ confirm: "DELETE_MY_ACCOUNT" });
+    const req = makeRequest({ confirm: "test@example.com" });
     const res = await DELETE(req);
 
     expect(res.status).toBe(404);

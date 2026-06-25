@@ -133,20 +133,30 @@ export default function SettingsPage() {
     toast.success("Onboarding reset");
   };
 
-  const fetchExportData = async () => {
-    const [eventsRes, storiesRes] = await Promise.all([
-      fetch("/api/events"),
-      fetch("/api/stories"),
-    ]);
-    if (!eventsRes.ok || !storiesRes.ok) {
-      throw new Error("Failed to fetch data");
+  // Both /api/events and /api/stories are cursor-paginated (default page size
+  // 50). Follow nextCursor so an export contains the user's FULL history, not
+  // just the first page. The iteration cap is a safety net against a malformed
+  // server response that never stops returning a cursor.
+  const fetchAllPages = async (path: string, key: "events" | "stories") => {
+    const all: Record<string, unknown>[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < 1000; page++) {
+      const res = await fetch(`${path}?limit=100${cursor ? `&cursor=${cursor}` : ""}`);
+      if (!res.ok) throw new Error("Failed to fetch data");
+      const data = await res.json();
+      if (Array.isArray(data[key])) all.push(...data[key]);
+      cursor = data.nextCursor || undefined;
+      if (!cursor) break;
     }
-    const eventsData = await eventsRes.json();
-    const storiesData = await storiesRes.json();
-    return {
-      events: eventsData.events || [],
-      stories: storiesData.stories || [],
-    };
+    return all;
+  };
+
+  const fetchExportData = async () => {
+    const [events, stories] = await Promise.all([
+      fetchAllPages("/api/events", "events"),
+      fetchAllPages("/api/stories", "stories"),
+    ]);
+    return { events, stories };
   };
 
   const downloadFile = (content: string, filename: string, type: string) => {

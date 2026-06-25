@@ -39,8 +39,9 @@ function HeroSection() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const isAuthed = status !== "loading" && !!session;
   const handleCTA = () => {
-    if (status !== "loading" && session) window.location.href = "/timeline";
+    if (isAuthed) window.location.href = "/timeline";
     else signIn("google", { callbackUrl: "/timeline" });
   };
 
@@ -133,10 +134,10 @@ function HeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12">
           <button onClick={handleCTA} className="group inline-flex cursor-pointer items-center gap-2 rounded-full px-8 py-3.5 text-sm font-medium bg-chrono-text text-chrono-bg hover:opacity-80 transition-all duration-300">
-            Get Started <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+            {isAuthed ? "Open your timeline" : "Get Started"} <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
           </button>
           <Link href="/insights" className="px-8 py-3.5 text-chrono-muted hover:text-chrono-text border border-[var(--line)] hover:border-[var(--line-hover)] rounded-full transition-all text-sm font-medium">
-            View Demo
+            {isAuthed ? "View your insights" : "View Demo"}
           </Link>
         </div>
       </div>
@@ -468,8 +469,9 @@ function StatementSection() {
 
 function CTASection() {
   const { data: session, status } = useSession();
+  const isAuthed = status !== "loading" && !!session;
   const handleCTA = () => {
-    if (status !== "loading" && session) window.location.href = "/timeline";
+    if (isAuthed) window.location.href = "/timeline";
     else signIn("google", { callbackUrl: "/timeline" });
   };
 
@@ -484,10 +486,10 @@ function CTASection() {
         </p>
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
           <button onClick={handleCTA} className="group inline-flex cursor-pointer items-center gap-2.5 rounded-full px-10 py-4 text-sm font-medium bg-chrono-text text-chrono-bg hover:opacity-80 transition-all">
-            Get Started <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
+            {isAuthed ? "Open your timeline" : "Get Started"} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform duration-300" />
           </button>
           <Link href="/insights" className="px-10 py-4 text-chrono-muted hover:text-chrono-text border border-[var(--line)] hover:border-[var(--line-hover)] rounded-full transition-all text-sm font-medium">
-            See a Demo
+            {isAuthed ? "See your insights" : "See a Demo"}
           </Link>
         </div>
       </div>

@@ -27,7 +27,11 @@ export function useInsights() {
   });
 
   const stats = data?.stats || null;
-  const isShowingDemo = isReady && (!isAuthenticated || (!isLoading && !stats));
+  // Only show demo data to signed-out visitors. An authenticated user with no
+  // events keeps `stats === null` so the page renders its "No insights yet"
+  // empty state — instead of demo numbers and a "Sign in" prompt aimed at
+  // someone who is already signed in. Matches useEvents/useStories.
+  const isShowingDemo = isReady && !isAuthenticated;
   const displayStats = isShowingDemo ? demoInsightStats : stats;
 
   return {
